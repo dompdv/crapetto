@@ -1,10 +1,9 @@
-<ul>
 <%= if @current_user do %>
-  <li><%= @current_user.email %></li>
-  <li><%= link "Settings", to: Routes.user_settings_path(@conn, :edit) %></li>
-  <li><%= link "Log out", to: Routes.user_session_path(@conn, :delete), method: :delete %></li>
+  <span class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"><%= @current_user.email %></span>
+  <%= link "Settings", to: Routes.user_settings_path(@conn, :edit), class: "text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
+  <%= link "Log out", to: Routes.user_session_path(@conn, :delete), method: :delete, class: "text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
 <% else %>
-  <li><%= link "Register", to: Routes.user_registration_path(@conn, :new) %></li>
-  <li><%= link "Log in", to: Routes.user_session_path(@conn, :new) %></li>
-<% end %>
-</ul>
+  <%= link "Register", to: Routes.user_registration_path(@conn, :new), class: "text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
+  <%= link "Log in", to: Routes.user_session_path(@conn, :new), class: "text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
+              <!--a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Team</a-->
+              <% end %>

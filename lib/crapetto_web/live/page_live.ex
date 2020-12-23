@@ -7,12 +7,13 @@ defmodule CrapettoWeb.PageLive do
   def mount(_params,  %{"user_token" => token}, socket) do
     current_user = Accounts.get_user_by_session_token(token)
 
-    # Presence
+    # Presence. Le topic est arbitraire (ici, la table de jeu)
     topic = "table:lobby"
     players = Presence.list(topic) |> Map.values() |> Enum.map(fn %{metas: [m]} -> m.player end) |> MapSet.new() # Déduplique en utilisant un MapSet
     # Subscribe to the topic
     CrapettoWeb.Endpoint.subscribe(topic)
     # Track changes to the topic : utilise in Presence.track qui track le **process**
+    # "player" est une méta qui contient seulement l'email du joueur
     Presence.track(self(), topic, socket.id, %{player: current_user.email})
 
     {:ok, assign(socket, %{players: players,current_user: current_user})}

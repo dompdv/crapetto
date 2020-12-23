@@ -22,5 +22,9 @@ Pour récupérer le user dans la session liveview,
 def mount(params, session, socket) do
 devient
 def mount(params, %{"user_token" => token}, socket) do 
+avec     current_user = Accounts.get_user_by_session_token(token)
+pour récupérer le user
 
 
+# Créer un CSS avec Tailwind
+npx tailwindcss-cli build -o assets/css/tailwind.css
