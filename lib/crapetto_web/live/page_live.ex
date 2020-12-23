@@ -18,16 +18,15 @@ defmodule CrapettoWeb.PageLive do
     {:ok, assign(socket, %{players: players,current_user: current_user})}
   end
 
+  # Evenement lancé par Presence à chaque fois qu'un joueur arrive ou s'en va
   @impl true
   def handle_info(
         %{event: "presence_diff", payload: %{joins: joins, leaves: leaves}},
         %{assigns: %{players: players}} = socket
       ) do
-        IO.inspect({"DIFF", joins, leaves, players})
         joiners = joins  |> Map.values() |> Enum.map(fn %{metas: [m]} -> m.player end) |> MapSet.new()
         leavers = leaves |> Map.values() |> Enum.map(fn %{metas: [m]} -> m.player end) |> MapSet.new()
         updated_players = players |> MapSet.union(joiners) |> MapSet.difference(leavers)
-    IO.inspect({"updated", joiners, leavers, updated_players})
     {:noreply, assign(socket, players: updated_players)}
   end
 

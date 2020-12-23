@@ -1,12 +1,18 @@
 <section class="phx-hero">
   <h1>Crapetto</h1>
   <p>Le jeu qui brise les familles</p>
+    <!-- utton type="submit">Voir les parties</button-->
+</section>
 
-    <button type="submit">Voir les parties</button>
-    (<%= @current_user.email %>)
+<section class="row">
+  <article class="column">
     <ul>
     <%= for email <- @players do %>
-    <li><%= email %></li>
+    <li><%= email %><%= if email == @current_user.email, do: " (*)", else: "" %></li>
     <% end %>
     </ul>
-</section>
+  </article
+  <article class="column">
+    (<%= @current_user.email %>)
+  </article
+  </section>
