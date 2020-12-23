@@ -1,15 +1,19 @@
-<section class="phx-hero">
-  <h1>Crapetto</h1>
-  <p>Le jeu qui brise les familles</p>
-    <!-- button type="submit">Voir les parties</button-->
-</section>
 
-    <ul>
+<table class="table-auto">
+  <thead class="justify-between">
+    <tr class="bg-gray-800">
+      <th class="px-16 py-2"><span class="text-gray-300">Online</span></th>
+      <th class="px-2 py-2"><span class="text-gray-300">Playing</span></th>
+    </tr>
+  </thead>
+
+  <tbody class="bg-gray-200">
     <%= for email <- @players do %>
-    <li><%= email %><%= if email == @current_user.email, do: " (*)", else: "" %></li>
+    <tr class="bg-white border-2 border-gray-100">
+      <td><span class="text-center ml-2"><%= email %> <%= if email == @current_user.email do %> *<% end %> </span></td>
+      <td  class="text-center ml-2 text-red-600"><i class="fas fa-volleyball-ball"></i> <i class="fas fa-bed"></i></td>
+    </tr>
     <% end %>
+  </tbody>
 
-
-<button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-              Save
-            </button>
+</table>
