@@ -28,3 +28,5 @@ pour récupérer le user
 
 # Créer un CSS avec Tailwind
 npx tailwindcss-cli build -o assets/css/tailwind.css
+
+# Tests

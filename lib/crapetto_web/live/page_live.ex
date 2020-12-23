@@ -4,19 +4,25 @@ defmodule CrapettoWeb.PageLive do
   alias Crapetto.Accounts
 
   @impl true
-  def mount(_params,  %{"user_token" => token}, socket) do
+  def mount(_params, %{"user_token" => token}, socket) do
     current_user = Accounts.get_user_by_session_token(token)
 
     # Presence. Le topic est arbitraire (ici, la table de jeu)
     topic = "table:lobby"
-    players = Presence.list(topic) |> Map.values() |> Enum.map(fn %{metas: [m]} -> m.player end) |> MapSet.new() # Déduplique en utilisant un MapSet
+    # Déduplique en utilisant un MapSet
+    players =
+      Presence.list(topic)
+      |> Map.values()
+      |> Enum.map(fn %{metas: [m]} -> m.player end)
+      |> MapSet.new()
+
     # Subscribe to the topic
     CrapettoWeb.Endpoint.subscribe(topic)
     # Track changes to the topic : utilise in Presence.track qui track le **process**
     # "player" est une méta qui contient seulement l'email du joueur
     Presence.track(self(), topic, socket.id, %{player: current_user.email})
 
-    {:ok, assign(socket, %{players: players,current_user: current_user})}
+    {:ok, assign(socket, %{players: players, current_user: current_user})}
   end
 
   # Evenement lancé par Presence à chaque fois qu'un joueur arrive ou s'en va
@@ -25,9 +31,9 @@ defmodule CrapettoWeb.PageLive do
         %{event: "presence_diff", payload: %{joins: joins, leaves: leaves}},
         %{assigns: %{players: players}} = socket
       ) do
-        joiners = joins  |> Map.values() |> Enum.map(fn %{metas: [m]} -> m.player end) |> MapSet.new()
-        leavers = leaves |> Map.values() |> Enum.map(fn %{metas: [m]} -> m.player end) |> MapSet.new()
-        updated_players = players |> MapSet.union(joiners) |> MapSet.difference(leavers)
+    joiners = joins |> Map.values() |> Enum.map(fn %{metas: [m]} -> m.player end) |> MapSet.new()
+    leavers = leaves |> Map.values() |> Enum.map(fn %{metas: [m]} -> m.player end) |> MapSet.new()
+    updated_players = players |> MapSet.union(joiners) |> MapSet.difference(leavers)
     {:noreply, assign(socket, players: updated_players)}
   end
 

@@ -5,6 +5,7 @@ defmodule CrapettoWeb.Presence do
   See the [`Phoenix.Presence`](http://hexdocs.pm/phoenix/Phoenix.Presence.html)
   docs for more details.
   """
-  use Phoenix.Presence, otp_app: :crapetto,
-                        pubsub_server: Crapetto.PubSub
+  use Phoenix.Presence,
+    otp_app: :crapetto,
+    pubsub_server: Crapetto.PubSub
 end

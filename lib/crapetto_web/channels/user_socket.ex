@@ -1,7 +1,6 @@
 defmodule CrapettoWeb.UserSocket do
   use Phoenix.Socket
 
-
   ## Channels
   # channel "room:*", CrapettoWeb.RoomChannel
 
@@ -32,5 +31,5 @@ defmodule CrapettoWeb.UserSocket do
   #
   # Returning `nil` makes this socket anonymous.
   @impl true
-  def id(_socket), do: :nil
+  def id(_socket), do: nil
 end

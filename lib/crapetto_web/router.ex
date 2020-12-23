@@ -17,7 +17,6 @@ defmodule CrapettoWeb.Router do
     plug :accepts, ["json"]
   end
 
-
   # Other scopes may use custom stacks.
   # scope "/api", CrapettoWeb do
   #   pipe_through :api

@@ -17,7 +17,8 @@ defmodule Crapetto.Application do
       CrapettoWeb.Endpoint,
       # Start a worker by calling: Crapetto.Worker.start_link(arg)
       # {Crapetto.Worker, arg}
-      CrapettoWeb.Presence
+      CrapettoWeb.Presence,
+      {Crapetto.Casino, name: Crapetto.Casino}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

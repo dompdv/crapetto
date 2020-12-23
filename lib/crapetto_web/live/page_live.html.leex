@@ -1,19 +1,34 @@
 
-<table class="table-auto">
-  <thead class="justify-between">
-    <tr class="bg-gray-800">
-      <th class="px-16 py-2"><span class="text-gray-300">Online</span></th>
-      <th class="px-2 py-2"><span class="text-gray-300">Playing</span></th>
-    </tr>
-  </thead>
 
-  <tbody class="bg-gray-200">
-    <%= for email <- @players do %>
-    <tr class="bg-white border-2 border-gray-100">
-      <td><span class="text-center ml-2"><%= email %> <%= if email == @current_user.email do %> *<% end %> </span></td>
-      <td  class="text-center ml-2 text-red-600"><i class="fas fa-volleyball-ball"></i> <i class="fas fa-bed"></i></td>
-    </tr>
-    <% end %>
-  </tbody>
 
-</table>
+
+<div class="flex flexw-row space-x-4 justify-between">
+  <div class="flex-grow">
+  qdsdqs<p> qdsdqsqsd </p>
+  qdsdqs<p> qdsdqsqsd </p>
+  qdsdqs<p> qdsdqsqsd </p>
+  </div>
+
+
+  <div class="flex-grow-0">
+
+  <!-- Player list -->
+    <table class="table-auto">
+      <thead class="justify-between">
+        <tr class="bg-gray-100">
+          <th class="p-2 text-left"><span class="text-gray-600">Online</span></th>
+          <th class="p-2 text-center"><span class="text-gray-600">Playing</span></th>
+        </tr>
+      </thead>
+      <tbody class="bg-white">
+        <%= for email <- @players do %>
+        <tr class="bg-white">
+          <td class="p-2 text-left"><span><%= email %> <%= if email == @current_user.email do %> *<% end %> </span></td>
+          <td class="p-2 text-center text-red-600"><i class="fas fa-volleyball-ball"></i> <i class="fas fa-bed"></i></td>
+        </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+  </div>
+</div>
