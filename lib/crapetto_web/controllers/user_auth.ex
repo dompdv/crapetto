@@ -75,6 +75,8 @@ defmodule CrapettoWeb.UserAuth do
     user_token && Accounts.delete_session_token(user_token)
 
     if live_socket_id = get_session(conn, :live_socket_id) do
+      IO.inspect("Disconnec")
+      IO.inspect(live_socket_id)
       CrapettoWeb.Endpoint.broadcast(live_socket_id, "disconnect", %{})
     end
 

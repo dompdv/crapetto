@@ -1,6 +1,7 @@
 defmodule CrapettoWeb.UserSocket do
   use Phoenix.Socket
 
+
   ## Channels
   # channel "room:*", CrapettoWeb.RoomChannel
 
@@ -16,8 +17,8 @@ defmodule CrapettoWeb.UserSocket do
   # See `Phoenix.Token` documentation for examples in
   # performing token verification on connect.
   @impl true
-  def connect(_params, socket, _connect_info) do
-    {:ok, socket}
+  def connect(params, socket, _connect_info) do
+    {:ok, assign(socket, user_id: params["user_id"])}
   end
 
   # Socket id's are topics that allow you to identify all sockets for a given user:
@@ -31,5 +32,5 @@ defmodule CrapettoWeb.UserSocket do
   #
   # Returning `nil` makes this socket anonymous.
   @impl true
-  def id(_socket), do: nil
+  def id(_socket), do: :nil
 end

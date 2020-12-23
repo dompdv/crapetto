@@ -1,9 +1,34 @@
 defmodule CrapettoWeb.PageLive do
   use CrapettoWeb, :live_view
+  alias CrapettoWeb.Presence
+  alias Crapetto.Accounts
 
   @impl true
-  def mount(_params, _session, socket) do
-    {:ok, assign(socket, query: "", results: %{})}
+  def mount(_params,  %{"user_token" => token}, socket) do
+    current_user = Accounts.get_user_by_session_token(token)
+
+    # Presence
+    topic = "table:lobby"
+    players = Presence.list(topic) |> Map.values() |> Enum.map(fn %{metas: [m]} -> m.player end) |> MapSet.new() # Déduplique en utilisant un MapSet
+    # Subscribe to the topic
+    CrapettoWeb.Endpoint.subscribe(topic)
+    # Track changes to the topic : utilise in Presence.track qui track le **process**
+    Presence.track(self(), topic, socket.id, %{player: current_user.email})
+
+    {:ok, assign(socket, %{players: players,current_user: current_user})}
+  end
+
+  @impl true
+  def handle_info(
+        %{event: "presence_diff", payload: %{joins: joins, leaves: leaves}},
+        %{assigns: %{players: players}} = socket
+      ) do
+        IO.inspect({"DIFF", joins, leaves, players})
+        joiners = joins  |> Map.values() |> Enum.map(fn %{metas: [m]} -> m.player end) |> MapSet.new()
+        leavers = leaves |> Map.values() |> Enum.map(fn %{metas: [m]} -> m.player end) |> MapSet.new()
+        updated_players = players |> MapSet.union(joiners) |> MapSet.difference(leavers)
+    IO.inspect({"updated", joiners, leavers, updated_players})
+    {:noreply, assign(socket, players: updated_players)}
   end
 
   @impl true

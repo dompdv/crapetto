@@ -3,4 +3,10 @@
   <p>Le jeu qui brise les familles</p>
 
     <button type="submit">Voir les parties</button>
+    (<%= @current_user.email %>)
+    <ul>
+    <%= for email <- @players do %>
+    <li><%= email %></li>
+    <% end %>
+    </ul>
 </section>

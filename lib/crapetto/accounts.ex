@@ -9,6 +9,15 @@ defmodule Crapetto.Accounts do
 
   ## Database getters
 
+  def get_users_map(ids) do
+    query =
+      from u in User,
+        where: u.id in ^ids,
+        select: {u.id, u}
+
+    query |> Repo.all() |> Enum.into(%{})
+  end
+
   @doc """
   Gets a user by email.
 

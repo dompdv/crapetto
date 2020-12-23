@@ -17,11 +17,6 @@ defmodule CrapettoWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", CrapettoWeb do
-    pipe_through :browser
-
-    live "/", PageLive, :index
-  end
 
   # Other scopes may use custom stacks.
   # scope "/api", CrapettoWeb do
@@ -45,6 +40,8 @@ defmodule CrapettoWeb.Router do
 
   scope "/", CrapettoWeb do
     pipe_through [:browser, :require_authenticated_user]
+    live "/", PageLive, :index
+    #socket "/live", Phoenix.LiveView.Socket, websocket: [connect_info: [session: @session_options]]
 
     get "/users/settings", UserSettingsController, :edit
     put "/users/settings", UserSettingsController, :update
