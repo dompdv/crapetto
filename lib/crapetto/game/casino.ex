@@ -2,6 +2,7 @@ defmodule Crapetto.Casino do
   use GenServer
 
   alias Crapetto.Game
+  alias Crapetto.GameServer
 
 @doc """
   Starts the registry.
@@ -35,11 +36,11 @@ defmodule Crapetto.Casino do
   Create a new game with some initial game_description
   Returns `{:ok, id_game}` if creation succeeds, `:error` otherwise.
   """
-  def create(server, %{owner: owner} = params) do
-    GenServer.call(server, {:create, %{owner: owner}})
+  def create(server, id_owner, owner) do
+    GenServer.call(server, {:create, %{owner: owner, id_owner: id_owner}})
   end
-  def create(%{owner: owner} = params) do
-    GenServer.call(Crapetto.Casino, {:create, %{owner: owner}})
+  def create(id_owner, owner) do
+    GenServer.call(Crapetto.Casino, {:create, %{owner: owner, id_owner: id_owner}})
   end
 
   ## Defining GenServer Callbacks
@@ -51,19 +52,26 @@ defmodule Crapetto.Casino do
 
   @impl true
   def handle_call({:lookup, id_game}, _from, games) do
-    {:reply, Map.fetch(games, id_game), games}
+    game_pid = Map.fetch(games, id_game)
+    {:reply, GameServer.get_state(game_pid), games}
   end
 
   @impl true
   def handle_call(:list, _from, games) do
-    {:reply, {:ok, games}, games}
+    game_states =
+      games
+      |> Enum.to_list()
+      |> Enum.map(fn {k, v} -> {k, GameServer.get_state(v)} end)
+      |> Map.new()
+    {:reply, {:ok, game_states}, games}
   end
 
   @impl true
-  def handle_call({:create, %{owner: owner}}, _from, games) do
-    id_game = Enum.reduce(1..20, "", fn _, acc -> Enum.random(String.graphemes("ABCDEFGHIJKLMNOPQRSTUVWXYZ23456789")) <> acc end)
-    new_game = Game.new_game(id_game, owner)
-    new_state = Map.put(games, id_game, new_game)
-    {:reply, {:ok, id_game} , new_state}
+  def handle_call({:create, %{owner: owner, id_owner: id_owner}}, _from, games) do
+    {:ok, new_game_pid} = GameServer.create(id_owner, owner)
+    new_game = GameServer.get_state(new_game_pid)
+    new_state = Map.put(games, new_game.id_game, new_game_pid)
+    Phoenix.PubSub.broadcast(Crapetto.PubSub, "games_arena", :new_game)
+    {:reply, {:ok, new_game.id_game} , new_state}
   end
 end

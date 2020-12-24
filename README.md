@@ -30,3 +30,7 @@ pour récupérer le user
 npx tailwindcss-cli build -o assets/css/tailwind.css
 
 # Tests
+mix test crapetto/casino_tests.exs
+
+# la notion de Game
+avec un defstruct et des fonctions commodes de manipulation

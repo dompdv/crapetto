@@ -2,6 +2,7 @@ defmodule CrapettoWeb.PageLive do
   use CrapettoWeb, :live_view
   alias CrapettoWeb.Presence
   alias Crapetto.Accounts
+  alias Crapetto.Casino
 
   @impl true
   def mount(_params, %{"user_token" => token}, socket) do
@@ -20,9 +21,18 @@ defmodule CrapettoWeb.PageLive do
     CrapettoWeb.Endpoint.subscribe(topic)
     # Track changes to the topic : utilise in Presence.track qui track le **process**
     # "player" est une méta qui contient seulement l'email du joueur
-    Presence.track(self(), topic, socket.id, %{player: current_user.email})
+    Presence.track(self(), topic, socket.id, %{player: current_user.email, player_id: current_user.id})
 
-    {:ok, assign(socket, %{players: players, current_user: current_user})}
+    # Subscribe to the topic where news are broacasted about all games (creation, end, change of status,...)
+    Phoenix.PubSub.unsubscribe(Crapetto.PubSub, "games_arena")
+    Phoenix.PubSub.subscribe(Crapetto.PubSub, "games_arena")
+
+    {:ok, games} = Casino.list()
+    {:ok, assign(socket, %{
+      players: players,
+      current_user: current_user,
+      games: games
+      })}
   end
 
   # Evenement lancé par Presence à chaque fois qu'un joueur arrive ou s'en va
@@ -37,10 +47,36 @@ defmodule CrapettoWeb.PageLive do
     {:noreply, assign(socket, players: updated_players)}
   end
 
+
+  # A new game has been created
+  @impl true
+  def handle_info(:new_game, socket) do
+    IO.inspect({"handle new_game"})
+    {:ok, games} = Casino.list()
+    {:noreply, assign(socket, games: games)}
+  end
+
+  @impl true
+  def handle_info(params, socket) do
+    IO.inspect({"handle info", params})
+    {:noreply, socket}
+  end
+
+  def handle_event("new_game", _params, socket) do
+    user = socket.assigns.current_user
+    id_user = user.id
+    Casino.create(id_user, user.email)
+    IO.inspect({"CLICK", user.email, id_user})
+
+    {:noreply, socket}
+  end
+
+
   @impl true
   def handle_event("suggest", %{"q" => query}, socket) do
     {:noreply, assign(socket, results: search(query), query: query)}
   end
+
 
   @impl true
   def handle_event("search", %{"q" => query}, socket) do
