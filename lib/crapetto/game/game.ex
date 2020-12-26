@@ -98,6 +98,7 @@ defmodule Crapetto.Game do
     end
   end
 
+  # Joue une carte du ligretto
   def play_ligretto(game, player) do
     %{players_decks: %{^player => %{ligretto: ligretto} = player_deck}} = game
     case ligretto do
@@ -118,6 +119,7 @@ defmodule Crapetto.Game do
     end
   end
 
+  # Joue une carte d'une série
   def play_serie(game, player, location) do
     %{players_decks: %{^player => %{series: %{^location => serie} = series} = player_deck}} = game
     case serie do
@@ -135,8 +137,24 @@ defmodule Crapetto.Game do
     end
   end
 
+  # Joue le displayed
+  def play_displayed(game, player) do
+    %{players_decks: %{^player => %{displayed: displayed} = player_deck}} = game
+    case displayed do
+      [] -> {:error, game}
+      [card | r_displayed] ->
+        if not playable?(game, card) do
+          {:error, game}
+        else
+          game = play_on_stack(game, card)
+          new_player_deck = %{player_deck | displayed: r_displayed}
+          game = %{game | players_decks: Map.put(game.players_decks, player, new_player_deck)}
+          {:ok, game}
+        end
+    end
+  end
 
-
+  # Remplit le ligretto au départ (de 10 carte plus les séries)
   defp fill_ligretto(game) do
     Enum.reduce(game.players, game, fn player, game1 -> Enum.reduce(1..(10 + game.series), game1, fn _, g -> deck_to_ligretto(g, player) end) end )
   end

@@ -14,7 +14,9 @@ defmodule Crapetto.GameTest do
   test "basic Game tests", %{game: game} do
     assert game.owner == "dompdv"
     game = Game.start_game(game)
-    game = Enum.reduce(1..100, game, fn _, g -> Game.show_three(g, "Alice") end)
+    before_count = Enum.count(game.players_decks["Alice"].displayed) + Enum.count(game.players_decks["Alice"].deck)
+    Enum.reduce(1..59, game, fn _, g -> Game.show_three(g, "Alice") end)
+    assert before_count == Enum.count(game.players_decks["Alice"].displayed) + Enum.count(game.players_decks["Alice"].deck)
   end
 
   test "Play card", %{game: game} do
@@ -36,7 +38,8 @@ defmodule Crapetto.GameTest do
     %{players_decks: %{"Bob" => %{ligretto: ligretto} = player_deck}} = game
     new_player_deck = %{player_deck |ligretto: [{"Bob", :yellow, 3} | ligretto]}
     game = %{game | players_decks: Map.put(game.players_decks, "Bob", new_player_deck)}
-    {res, game} = Game.play_ligretto(game, "Bob")
+    {res, _} = Game.play_ligretto(game, "Bob")
+    assert res == :ok
     #IO.inspect(game)
     #IO.inspect(res)
   end
@@ -47,11 +50,21 @@ defmodule Crapetto.GameTest do
     series = Map.put(series, 1, {"Bob", :blue, 1})
     new_player_deck = %{player_deck | series: series}
     game = %{game | players_decks: Map.put(game.players_decks, "Bob", new_player_deck)}
-    IO.inspect(game.players_decks["Bob"])
-    {res, game} = Game.play_serie(game, "Bob", 1)
-    IO.inspect(game.players_decks["Bob"])
-    IO.inspect(game.stacks)
-    IO.inspect(res)
+    {res, _game} = Game.play_serie(game, "Bob", 1)
+    assert res == :ok
   end
 
+  test "Play displayed", %{game: game} do
+    game = Game.start_game(game)
+    %{players_decks: %{"Bob" => %{displayed: displayed} = player_deck}} = game
+    displayed = [{"Bob", :blue, 1} |displayed]
+    new_player_deck = %{player_deck | displayed: displayed}
+    game = %{game | players_decks: Map.put(game.players_decks, "Bob", new_player_deck)}
+    #IO.inspect(game.players_decks["Bob"])
+    {res, _game} = Game.play_displayed(game, "Bob")
+    #IO.inspect(game.players_decks["Bob"])
+    #IO.inspect(game.stacks)
+    #IO.inspect(res)
+    assert res == :ok
+  end
 end
