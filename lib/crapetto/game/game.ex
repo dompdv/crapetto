@@ -1,6 +1,6 @@
 defmodule Crapetto.Game do
   @enforce_keys [:id_game, :owner, :id_owner]
-  defstruct [:id_game, :owner, :id_owner, status: :starting, num_players: 0, players: [], players_decks: %{}, stacks: %{}, series: 0]
+  defstruct [:id_game, :owner, :id_owner, status: :starting, winner: nil, num_players: 0, players: [], players_decks: %{}, stacks: %{}, series: 0]
 
   # Colors = :red :blue :green :yellow
   # Status : :starting = waiting to start
@@ -31,6 +31,7 @@ defmodule Crapetto.Game do
     %{game | players_decks: Map.put(game.players_decks, player, new_player_deck)}
   end
 
+  # remplir une serie vide d'un joueur avec le ligretto
   defp ligretto_to_series(game, player, location) do
     %{players_decks: %{^player => %{ligretto: ligretto, series: series} = player_deck}} = game
     if series[location] != nil do
@@ -39,10 +40,15 @@ defmodule Crapetto.Game do
       {card, ligretto} = List.pop_at(ligretto, 0)
       series = Map.put series, location, card
       new_player_deck = %{player_deck | ligretto: ligretto, series: series}
-      %{game | players_decks: Map.put(game.players_decks, player, new_player_deck)}
+      empty_ligretto = Enum.count(ligretto) == 0
+      %{status: status, winner: winner} = game
+      %{game | players_decks: Map.put(game.players_decks, player, new_player_deck),
+                     status: (if empty_ligretto, do: :over, else: status),
+                     winner: (if empty_ligretto and winner == nil, do: player, else: winner)}
     end
   end
 
+  # retourne 3 cartes (au maximum) du deck vers la pile displayed
   def show_three(game, player) do
     %{players_decks: %{^player => %{deck: deck, displayed: displayed} = player_deck}} = game
     count_deck = Enum.count(deck)
@@ -56,6 +62,79 @@ defmodule Crapetto.Game do
     new_player_deck = %{player_deck | deck: deck, displayed: displayed}
     %{game | players_decks: Map.put(game.players_decks, player, new_player_deck)}
   end
+
+  # Vérifie si on peut jouer une carte quelque part
+  def playable?(game, {_, color, number}) do
+    if number == 1 do
+      true
+    else
+      Enum.count(
+        game.stacks
+        |> Enum.filter(fn {_, stack} -> Enum.count(stack) > 0 end)
+        |> Enum.map(fn {_, [{_, c, n} | _]} -> {c, n} end)
+        |> Enum.filter(fn {c, n} -> c == color and number == n + 1 end)
+      ) > 0
+    end
+  end
+
+  # Joue une carte sur une stack
+  def play_on_stack(game, {_, color, number} = card) do
+    if number == 1 do
+      # Choisis une stack vide au hasard
+      {stack, _} =
+        game.stacks
+        |> Enum.filter(fn {_, stack} -> Enum.count(stack) == 0 end)
+        |> Enum.shuffle()
+        |> hd()
+      %{game | stacks: Map.put(game.stacks, stack, [card])}
+    else
+      # Trouve une stack où poser la carte
+      {stack, stack_content} =
+        game.stacks
+        |> Enum.filter(fn {_, stack} -> Enum.count(stack) > 0 end)
+        |> Enum.filter(fn {_, [{_, c, n} | _]} -> c == color and number == n + 1 end)
+        |> hd()
+      %{game | stacks: Map.put(game.stacks, stack, [card | stack_content])}
+    end
+  end
+
+  def play_ligretto(game, player) do
+    %{players_decks: %{^player => %{ligretto: ligretto} = player_deck}} = game
+    case ligretto do
+      [] -> {:error, game}
+      [card|r_ligretto] ->
+        if not playable?(game, card) do
+          {:error, game}
+        else
+          game = play_on_stack(game, card)
+          new_player_deck = %{player_deck | ligretto: r_ligretto}
+          # Si on vide le ligretto, on a un gagnant !
+          empty_ligretto = Enum.count(r_ligretto) == 0
+          %{status: status, winner: winner} = game
+          {:ok, %{game | players_decks: Map.put(game.players_decks, player, new_player_deck),
+                         status: (if empty_ligretto, do: :over, else: status),
+                         winner: (if empty_ligretto and winner == nil, do: player, else: winner)}}
+        end
+    end
+  end
+
+  def play_serie(game, player, location) do
+    %{players_decks: %{^player => %{series: %{^location => serie} = series} = player_deck}} = game
+    case serie do
+      nil -> {:error, game}
+      card ->
+        if not playable?(game, card) do
+          {:error, game}
+        else
+          game = play_on_stack(game, card)
+          new_player_deck = %{player_deck | series: Map.put(series, location, nil)}
+          game = %{game | players_decks: Map.put(game.players_decks, player, new_player_deck)}
+          game = ligretto_to_series(game, player, location)
+          {:ok, game}
+        end
+    end
+  end
+
 
 
   defp fill_ligretto(game) do
