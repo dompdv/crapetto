@@ -21,11 +21,25 @@ defmodule Crapetto.GameServer do
     GenServer.call(game, {:remove, id_player})
   end
 
+  def start_game(game) do
+    GenServer.call(game, :start)
+  end
+  def terminate_game(game) do
+    GenServer.call(game, :terminate)
+  end
+
+
   @impl true
   def init(%{owner: owner, id_owner: id_owner}) do
     new_game = Game.new_game(id_owner, owner)
     {:ok, new_game}
   end
+
+  defp broadcast(game, what) do
+    Phoenix.PubSub.broadcast(Crapetto.PubSub, "game:#{game.id_game}", what)
+    Phoenix.PubSub.broadcast(Crapetto.PubSub, "games_arena", :game_modification)
+  end
+
 
   @impl true
   def handle_call(:state, _from, game) do
@@ -35,17 +49,28 @@ defmodule Crapetto.GameServer do
   @impl true
   def handle_call({:add, id_player}, _from, game) do
     new_game = Game.add_player(game, id_player)
-    Phoenix.PubSub.broadcast(Crapetto.PubSub, "game:#{game.id_game}", {:add_player, id_player})
-    Phoenix.PubSub.broadcast(Crapetto.PubSub, "games_arena", :game_modification)
-
+    broadcast(new_game, {:add_player, id_player})
     {:reply, new_game, new_game}
   end
 
   @impl true
   def handle_call({:remove, id_player}, _from, game) do
     new_game = Game.remove_player(game, id_player)
-    Phoenix.PubSub.broadcast(Crapetto.PubSub, "game:#{game.id_game}", {:remove_player, id_player})
-    Phoenix.PubSub.broadcast(Crapetto.PubSub, "games_arena", :game_modification)
+    broadcast(new_game, {:remove_player, id_player})
+    {:reply, new_game, new_game}
+  end
+
+  @impl true
+  def handle_call(:start, _from, game) do
+    new_game = Game.start_game(game)
+    broadcast(new_game, :start)
+    {:reply, new_game, new_game}
+  end
+
+  @impl true
+  def handle_call(:terminate, _from, game) do
+    new_game = Game.start_game(game)
+    broadcast(new_game, :terminate)
     {:reply, new_game, new_game}
   end
 

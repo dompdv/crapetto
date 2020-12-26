@@ -55,20 +55,35 @@ def handle_event("quit", _params, socket) do
   {:noreply, assign(socket, :game,  game)}
 end
 
-defp refresh_players(socket) do
+@impl true
+def handle_event("launch_game", _params, socket) do
+  id_game = socket.assigns.id_game
+  game_pid  = Casino.game_pid(id_game)
+  game = GameServer.start_game(game_pid)
+  IO.inspect({"launch_game", game_pid, id_game, game})
+  {:noreply, assign(socket, :game,  game)}
+end
+
+
+
+defp refresh_game(socket) do
   id_game = socket.assigns.id_game
   assign(socket, game: Casino.lookup(id_game))
 end
 
 def handle_info({:add_player, id_player}, socket) do
   IO.inspect({"add_player", id_player})
-  {:noreply, refresh_players(socket)}
+  {:noreply, refresh_game(socket)}
 end
 def handle_info({:remove_player, id_player}, socket) do
   IO.inspect({"add_player", id_player})
-  {:noreply, refresh_players(socket)}
+  {:noreply, refresh_game(socket)}
 end
 
+def handle_info(:start, socket) do
+  IO.inspect({"start"})
+  {:noreply, refresh_game(socket)}
+end
 
 @impl true
 def handle_info(params, socket) do
