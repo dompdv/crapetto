@@ -3,7 +3,12 @@ defmodule Crapetto.Game do
   defstruct [:id_game, :owner, :id_owner, status: :starting, num_players: 0, players: [], players_decks: %{}, stacks: %{}, series: 0]
 
   # Colors = :red :blue :green :yellow
-  #
+  # Status : :starting = waiting to start
+  #          :playing  = players are currently playing
+  #          :over = the game is naturally over
+  #          :terminated = the game has been forced to terminate
+
+
   def new_game(id_owner, owner) do
     id_game = Enum.reduce(1..6, "", fn _, acc -> Enum.random(String.graphemes("ABCDEFGHIJKLMNOPQRSTUVWXYZ23456789")) <> acc end)
     %Crapetto.Game{id_game: id_game, owner: owner, id_owner: id_owner}
@@ -38,10 +43,20 @@ defmodule Crapetto.Game do
     end
   end
 
-  # Status : :starting = waiting to start
-  #          :playing  = players are currently playing
-  #          :over = the game is naturally over
-  #          :terminated = the game has been forced to terminate
+  def show_three(game, player) do
+    %{players_decks: %{^player => %{deck: deck, displayed: displayed} = player_deck}} = game
+    count_deck = Enum.count(deck)
+    {displayed, deck} = if count_deck == 0, do: {[], Enum.reverse(displayed)}, else: {displayed, deck}
+    {displayed, deck} = Enum.reduce(
+        1..min(3, Enum.count(deck)),
+        {displayed, deck},
+        fn _, {disp, dec} -> {card, dec} = List.pop_at(dec, 0)
+                             {[card | disp], dec} end
+    )
+    new_player_deck = %{player_deck | deck: deck, displayed: displayed}
+    %{game | players_decks: Map.put(game.players_decks, player, new_player_deck)}
+  end
+
 
   defp fill_ligretto(game) do
     Enum.reduce(game.players, game, fn player, game1 -> Enum.reduce(1..(10 + game.series), game1, fn _, g -> deck_to_ligretto(g, player) end) end )
