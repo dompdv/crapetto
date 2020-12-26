@@ -24,6 +24,9 @@ defmodule Crapetto.Casino do
     GenServer.call(Crapetto.Casino, {:lookup, id_game})
   end
 
+  def game_pid(id_game) do
+    GenServer.call(Crapetto.Casino, {:game_pid, id_game})
+  end
 
   def list(casino) do
     GenServer.call(casino, :list)
@@ -55,6 +58,14 @@ defmodule Crapetto.Casino do
     case Map.fetch(games, id_game) do
       :error -> {:reply, :error, games}
       {:ok, game_pid} -> {:reply, GameServer.get_state(game_pid), games}
+    end
+  end
+
+  @impl true
+  def handle_call({:game_pid, id_game}, _from, games) do
+    case Map.fetch(games, id_game) do
+      :error -> {:reply, :error, games}
+      {:ok, game_pid} -> {:reply, game_pid, games}
     end
   end
 

@@ -1,4 +1,46 @@
-BODY of the page
 
-(<%= @id_game%>)
-(<%= @game.owner%>)
+<%= if @live_action == :index do %>
+<header class="bg-white shadow">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <h3 class="text-3xl font-bold leading-tight text-gray-900">
+        Game <%= @id_game %>  Owner : <%= @game.owner %>
+      </h3>
+    </div>
+  </header>
+
+<div class="max-w-7xl mx-auto py-2 px-2 sm:px-6 lg:px-8">
+
+<div class="flex flex-row space-x-4 justify-between">
+  <div class="flex-grow">
+
+  <!-- Players list -->
+    <table class="table-auto">
+      <thead class="justify-between">
+        <tr class="bg-gray-100">
+          <th class="p-2 text-left"><span class="text-gray-600">Players</span></th>
+          <th class="p-2 text-left"></th>
+        </tr>
+      </thead>
+      <tbody class="bg-white">
+        <%= for player <- @game.players do %>
+        <tr class="bg-white"><td class="p-2 text-left"><%= player %> </td>
+        <td class="p-2 text-left"><%= if player == @current_user.email do %>
+            <button phx-click="quit" class="inline-flex justify-center p-1 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-400 hover:bg-indigo-700">Quit</button>
+        <% end %></td>
+        </tr>
+        <% end  %>
+      </tbody>
+    </table>
+
+  <div class="text-left py-2">
+    <button phx-click="join" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Join</button>
+  </div>
+
+  </div>
+
+
+</div>
+
+</div>
+
+<% end %>
