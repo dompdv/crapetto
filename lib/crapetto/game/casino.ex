@@ -52,8 +52,10 @@ defmodule Crapetto.Casino do
 
   @impl true
   def handle_call({:lookup, id_game}, _from, games) do
-    game_pid = Map.fetch(games, id_game)
-    {:reply, GameServer.get_state(game_pid), games}
+    case Map.fetch(games, id_game) do
+      :error -> {:reply, :error, games}
+      {:ok, game_pid} -> {:reply, GameServer.get_state(game_pid), games}
+    end
   end
 
   @impl true
@@ -74,4 +76,6 @@ defmodule Crapetto.Casino do
     Phoenix.PubSub.broadcast(Crapetto.PubSub, "games_arena", :new_game)
     {:reply, {:ok, new_game.id_game} , new_state}
   end
+  #TODO Ajouter le monitoring
+  #TODO Ajouter la suppression de parties
 end

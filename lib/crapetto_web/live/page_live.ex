@@ -3,29 +3,33 @@ defmodule CrapettoWeb.PageLive do
   alias CrapettoWeb.Presence
   alias Crapetto.Accounts
   alias Crapetto.Casino
+  alias CrapettoWeb.Router.Helpers, as: Routes
 
   @impl true
   def mount(_params, %{"user_token" => token}, socket) do
     current_user = Accounts.get_user_by_session_token(token)
-
-    # Presence. Le topic est arbitraire (ici, la table de jeu)
-    topic = "table:lobby"
-    # Déduplique en utilisant un MapSet
     players =
-      Presence.list(topic)
-      |> Map.values()
-      |> Enum.map(fn %{metas: [m]} -> m.player end)
-      |> MapSet.new()
+      if connected?(socket) do
+        # Presence. Le topic est arbitraire (ici, la table de jeu)
+        topic = "table:lobby"
 
-    # Subscribe to the topic
-    CrapettoWeb.Endpoint.subscribe(topic)
-    # Track changes to the topic : utilise in Presence.track qui track le **process**
-    # "player" est une méta qui contient seulement l'email du joueur
-    Presence.track(self(), topic, socket.id, %{player: current_user.email, player_id: current_user.id})
+        # Subscribe to the topic
+        CrapettoWeb.Endpoint.subscribe(topic)
+        # Track changes to the topic : utilise in Presence.track qui track le **process**
+        # "player" est une méta qui contient seulement l'email du joueur
+        Presence.track(self(), topic, socket.id, %{player: current_user.email, player_id: current_user.id})
 
-    # Subscribe to the topic where news are broacasted about all games (creation, end, change of status,...)
-    Phoenix.PubSub.unsubscribe(Crapetto.PubSub, "games_arena")
-    Phoenix.PubSub.subscribe(Crapetto.PubSub, "games_arena")
+        # Subscribe to the topic where news are broacasted about all games (creation, end, change of status,...)
+        Phoenix.PubSub.unsubscribe(Crapetto.PubSub, "games_arena")
+        Phoenix.PubSub.subscribe(Crapetto.PubSub, "games_arena")
+        # Déduplique en utilisant un MapSet
+        Presence.list(topic)
+        |> Map.values()
+        |> Enum.map(fn %{metas: [m]} -> m.player end)
+        |> MapSet.new()
+      else
+        []
+      end
 
     {:ok, games} = Casino.list()
     {:ok, assign(socket, %{
@@ -65,10 +69,9 @@ defmodule CrapettoWeb.PageLive do
   def handle_event("new_game", _params, socket) do
     user = socket.assigns.current_user
     id_user = user.id
-    Casino.create(id_user, user.email)
+    {:ok, id_game} = Casino.create(id_user, user.email)
     IO.inspect({"CLICK", user.email, id_user})
-
-    {:noreply, socket}
+    {:noreply, push_redirect(socket, to: "/games/#{id_game}")}
   end
 
 

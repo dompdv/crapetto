@@ -25,7 +25,7 @@
       <tbody class="bg-white">
         <%= for game <- Map.values(@games) do %>
         <tr class="bg-white">
-          <td class="p-2 text-left"><span><%= game.id_game %></span></td>
+          <td class="p-2 text-left"><span><%= live_redirect game.id_game, to: Routes.game_path(@socket, :index, game.id_game) %></span></td>
           <td class="p-2 text-left"><span><%= game.owner %></span></td>
           <td class="p-2 text-center"><span><%= Enum.count(game.players) %></span></td>
           <td class="p-2 text-left"><span>
@@ -49,15 +49,15 @@
     <table class="table-auto">
       <thead class="justify-between">
         <tr class="bg-gray-100">
-          <th class="p-2 text-left"><span class="text-gray-600">Online</span></th>
-          <th class="p-2 text-center"><span class="text-gray-600">Playing</span></th>
+          <th class="p-2 text-left"><span class="text-gray-600">Ready to play</span></th>
+          <!-- th class="p-2 text-center"><span class="text-gray-600">Playing</span></th-->
         </tr>
       </thead>
       <tbody class="bg-white">
         <%= for email <- @players do %>
         <tr class="bg-white">
-          <td class="p-2 text-left"><span><%= email %> <%= if email == @current_user.email do %> *<% end %> </span></td>
-          <td class="p-2 text-center text-red-600"><i class="fas fa-volleyball-ball"></i> <i class="fas fa-bed"></i></td>
+          <td class="p-2 text-left<%= if email == @current_user.email do %> text-red-600 <% end %>"><span><%= email %> </span></td>
+          <!--td class="p-2 text-center text-red-600"><i class="fas fa-volleyball-ball"></i> <i class="fas fa-bed"></i></td-->
         </tr>
         <% end %>
       </tbody>
