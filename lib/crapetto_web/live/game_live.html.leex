@@ -25,7 +25,7 @@
         <%= for player <- @game.players do %>
         <tr class="bg-white"><td class="p-2 text-left"><%= player %> </td>
         <td class="p-2 text-left"><%= if player == @current_user.email do %>
-            <button phx-click="quit" class="inline-flex justify-center p-1 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-400 hover:bg-indigo-700">Quit</button>
+            <button phx-click="quit" class="inline-flex justify-center p-1 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-400 hover:bg-indigo-700">Quit</button>
         <% end %></td>
         </tr>
         <% end  %>

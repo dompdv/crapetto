@@ -36,6 +36,8 @@ defmodule Crapetto.GameServer do
   def handle_call({:add, id_player}, _from, game) do
     new_game = Game.add_player(game, id_player)
     Phoenix.PubSub.broadcast(Crapetto.PubSub, "game:#{game.id_game}", {:add_player, id_player})
+    Phoenix.PubSub.broadcast(Crapetto.PubSub, "games_arena", :game_modification)
+
     {:reply, new_game, new_game}
   end
 
@@ -43,6 +45,7 @@ defmodule Crapetto.GameServer do
   def handle_call({:remove, id_player}, _from, game) do
     new_game = Game.remove_player(game, id_player)
     Phoenix.PubSub.broadcast(Crapetto.PubSub, "game:#{game.id_game}", {:remove_player, id_player})
+    Phoenix.PubSub.broadcast(Crapetto.PubSub, "games_arena", :game_modification)
     {:reply, new_game, new_game}
   end
 
