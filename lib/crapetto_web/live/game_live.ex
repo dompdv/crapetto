@@ -18,7 +18,7 @@ def mount(_params, %{"user_token" => token}, socket) do
     # Subscribe to the topic where news are broacasted about all games (creation, end, change of status,...)
   end
 
-  {:ok, assign(socket, %{current_user: current_user})}
+  {:ok, assign(socket, %{current_user: current_user, keyup: true})}
 end
 
 
@@ -66,7 +66,30 @@ def handle_event("launch_game", _params, socket) do
   {:noreply, assign(socket, :game,  game)}
 end
 
+@impl true
+def handle_event("keydown", %{"key" => key}, socket) do
+  if socket.assigns.keyup do
+    IO.inspect({"Keydown", String.upcase(key)})
+    case String.upcase(key) do
+      "A" -> 1
+      _ -> 2
+    end
 
+    {:noreply, assign(socket, :keyup,  false)}
+  else
+    {:noreply, socket}
+  end
+end
+
+def handle_event("keydown", params, socket) do
+  IO.inspect({"Keydown", params})
+  {:noreply, socket}
+end
+
+def handle_event("keyup", _params, socket) do
+  IO.inspect({"Keyup"})
+  {:noreply, assign(socket, :keyup,  true)}
+end
 
 defp refresh_game(socket) do
   id_game = socket.assigns.id_game

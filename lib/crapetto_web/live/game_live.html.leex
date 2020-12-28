@@ -45,7 +45,7 @@
 
 <%= if @game.status == :playing do %>
 
-<div class="container">
+<div class="container" phx-window-keydown="keydown" phx-throttle="10" phx-window-keyup="keyup">
 <div class="flex flex-row">
 
 <!-- Stacks -->
