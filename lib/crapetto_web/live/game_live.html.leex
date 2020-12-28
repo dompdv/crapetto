@@ -44,5 +44,78 @@
 
 
 <%= if @game.status == :playing do %>
-playing
+
+<div class="container">
+<div class="flex flex-row">
+
+<!-- Stacks -->
+<div class="flex-grow p-2">
+<div class="grid grid-cols-<%= if @game.num_players < 4, do: 4, else: 6 %> gap-4">
+<%= for {_, stack} <- @game.stacks do %>
+
+    <%= if Enum.empty?(stack) do %>
+    <div class="w-32 h-48 bg-gray-300 rounded-md flex justify-center items-center text-white text-2xl font-extrabold"></div>
+    <% else %>
+    <% [{_, c, n}, _] = stack %>
+    <div class="w-32 h-48 bg-<%=c%>-300 rounded-md flex justify-center items-center text-white text-2xl font-extrabold"><%=n%></div>
+    <% end %>
+
+<% end %>
+</div>
+</div>
+
+<!-- Other players -->
+<div class="flex-initial bg-gray-100 p-4 m-2">
+<%= for player <- (@game.players |> Enum.filter(fn p -> p != @current_user.email end)) do %>
+
+<p class="text-center font-bold text-sm w-max inline-block"><%= player %></p>
+<div class="grid grid-cols-<%= 2 + @game.series %> gap-1">
+        <% {_, c, n} = Game.get_ligretto_top(@game, player) %>
+        <div class="text-center text-white rounded-sm text-md w-4 bg-<%= if c == nil, do: "green", else: c %>-600"><%= if c != nil, do: n %></div>
+        <% {_, c, n} = Game.get_displayed_top(@game, player) %>
+        <div class="text-center text-white rounded-sm text-md w-4 bg-<%= if c == nil, do: "gray", else: c %>-600"><%= if c != nil, do: n %></div>
+        <%= for {_, {_, c, n}} <-  Game.get_series(@game, player) do %>
+        <div class="text-center text-white rounded-sm text-md w-4 bg-<%= if c == nil, do: "gray", else: c %>-600"><%= if c != nil, do: n %></div>
+        <% end %>
+</div>
+<% end %>
+
+</div>
+
+
+</div>
+<!-- Player deck -->
+<div class="flex flex-row bg-blue-100 p-4 m-2">
+ <% player_deck = Game.get_deck(@game, @current_user.email) %>
+
+<!-- Ligretto -->
+<div class="flex-initial m-1">
+ <% {_, c, n} = Game.get_ligretto_top(@game, @current_user.email) %>
+<div class="flex text-center text-white rounded-md justify-center items-center text-2xl  w-32 h-48 font-extrabold bg-<%= if c == nil, do: "green", else: c %>-600"><%= if c != nil, do: n %></div>
+<div class="text-center text-black justify-center items-center text-xl w-32 h-8"><%= Enum.count(player_deck.ligretto) %></div>
+<div class="text-center text-white justify-center items-center text-xl w-32 h-8 bg-gray-800">A</div>
+</div>
+
+<!-- Displayed -->
+<div class="flex-initial m-1">
+ <% {_, c, n} = Game.get_displayed_top(@game, @current_user.email) %>
+<div class="flex text-center text-white rounded-md justify-center items-center text-2xl  w-32 h-48 font-extrabold bg-<%= if c == nil, do: "green", else: c %>-600"><%= if c != nil, do: n %></div>
+<div class="text-center text-black justify-center items-center text-xl w-32 h-8"><%= Enum.count(player_deck.displayed) %></div>
+<div class="text-center text-white justify-center items-center text-xl w-32 h-8 bg-gray-800">Z</div>
+</div>
+
+<!-- Series -->
+<%= for {s, {_, c, n}} <-  Game.get_series(@game, @current_user.email) do %>
+<div class="flex-initial m-1">
+<div class="flex text-center text-white rounded-md justify-center items-center text-2xl  w-32 h-48 font-extrabold bg-<%= if c == nil, do: "green", else: c %>-600"><%= if c != nil, do: n %></div>
+<div class="text-center text-black justify-center items-center text-xl w-32 h-8"></div>
+<div class="text-center text-white justify-center items-center text-xl w-32 h-8 bg-gray-800"><%= %{0 => "E", 1 => "R", 2 => "T", 3 => "Y", 4 => "U", 5 => "I"}[s] %></div>
+</div>
+<% end %>
+
+
+</div>
+
+
+</div>
 <% end %>

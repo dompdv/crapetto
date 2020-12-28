@@ -1,6 +1,9 @@
 defmodule Crapetto.Game do
   @enforce_keys [:id_game, :owner, :id_owner]
-  defstruct [:id_game, :owner, :id_owner, status: :starting, winner: nil, num_players: 0, players: [], players_decks: %{}, stacks: %{}, series: 0]
+  defstruct [
+    :id_game, :owner, :id_owner, status: :starting, winner: nil,
+    num_players: 0, players: [], players_decks: %{},
+    stacks: %{}, series: 0]
 
   # Colors = :red :blue :green :yellow
   # Status : :starting = waiting to start
@@ -22,6 +25,36 @@ defmodule Crapetto.Game do
   def remove_player(%Crapetto.Game{status: :starting, players: players} = game, a_player) do
     new_players = List.delete(players, a_player)
     %Crapetto.Game{game | players: new_players, num_players: Enum.count(new_players)}
+  end
+
+  def get_deck(game, player) do
+    game.players_decks[player]
+  end
+
+  def get_ligretto_top(game, player) do
+    case game.players_decks[player].ligretto do
+      [] -> {player, nil, nil}
+      [card|_] -> card
+    end
+  end
+
+  def get_displayed_top(game, player) do
+    case game.players_decks[player].displayed do
+      [] -> {player, nil, nil}
+      [card|_] -> card
+    end
+  end
+
+  def get_series(game, player) do
+    game.players_decks[player].series
+    |> Enum.map(
+      fn {n, serie} ->
+        case serie do
+          nil -> {n, {player, nil, nil}}
+          card -> {n, card}
+        end
+      end
+    )
   end
 
   def deck_to_ligretto(game, player) do
@@ -68,12 +101,13 @@ defmodule Crapetto.Game do
     if number == 1 do
       true
     else
-      Enum.count(
+      not Enum.empty?(
         game.stacks
-        |> Enum.filter(fn {_, stack} -> Enum.count(stack) > 0 end)
-        |> Enum.map(fn {_, [{_, c, n} | _]} -> {c, n} end)
-        |> Enum.filter(fn {c, n} -> c == color and number == n + 1 end)
-      ) > 0
+        # Consider only non empty stacks
+        |> Enum.filter(fn {_, stack} -> not Enum.empty?(stack) end)
+        # Keep list of card of the same color whose first card is immediately below
+        |> Enum.filter(fn {_, [{_, c, n} | _]} -> c == color and number == n + 1 end)
+      )
     end
   end
 
@@ -83,15 +117,14 @@ defmodule Crapetto.Game do
       # Choisis une stack vide au hasard
       {stack, _} =
         game.stacks
-        |> Enum.filter(fn {_, stack} -> Enum.count(stack) == 0 end)
-        |> Enum.shuffle()
-        |> hd()
+        |> Enum.filter(fn {_, stack} -> Enum.empty?(stack) end)
+        |> Enum.random()
       %{game | stacks: Map.put(game.stacks, stack, [card])}
     else
       # Trouve une stack où poser la carte
       {stack, stack_content} =
         game.stacks
-        |> Enum.filter(fn {_, stack} -> Enum.count(stack) > 0 end)
+        |> Enum.filter(fn {_, stack} -> not Enum.empty?(stack) end)
         |> Enum.filter(fn {_, [{_, c, n} | _]} -> c == color and number == n + 1 end)
         |> hd()
       %{game | stacks: Map.put(game.stacks, stack, [card | stack_content])}

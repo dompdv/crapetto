@@ -3,6 +3,8 @@ defmodule CrapettoWeb.GameLive do
   alias Crapetto.Accounts
   alias Crapetto.Casino
   alias Crapetto.GameServer
+  alias Crapetto.Game
+
 #  alias CrapettoWeb.Router.Helpers, as: Routes
 
 
