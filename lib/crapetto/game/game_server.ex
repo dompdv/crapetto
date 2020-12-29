@@ -29,6 +29,21 @@ defmodule Crapetto.GameServer do
   end
 
 
+  def play_ligretto(game, player) do
+    GenServer.call(game, {:play_ligretto, player})
+  end
+
+  def play_displayed(game, player) do
+    GenServer.call(game, {:play_displayed, player})
+  end
+  def play_series(game, player, serie) do
+    GenServer.call(game, {:play_series, player, serie})
+  end
+
+  def show_three(game, player) do
+    GenServer.call(game, {:show_three, player})
+  end
+
   @impl true
   def init(%{owner: owner, id_owner: id_owner}) do
     new_game = Game.new_game(id_owner, owner)
@@ -73,5 +88,50 @@ defmodule Crapetto.GameServer do
     broadcast(new_game, :terminate)
     {:reply, new_game, new_game}
   end
+
+  @impl true
+  def handle_call({:play_ligretto, player}, _from, game) do
+    if game.status == :playing do
+      {result, new_game} = Game.play_ligretto(game, player)
+      broadcast(new_game, {:play_ligretto, result, player})
+      {:reply, {result, new_game}, new_game}
+    else
+      {:reply, {:ok, game}, game}
+    end
+  end
+
+  @impl true
+  def handle_call({:play_displayed, player}, _from, game) do
+    if game.status == :playing do
+      {result, new_game} = Game.play_displayed(game, player)
+      broadcast(new_game, {:play_displayed, result, player})
+      {:reply, {result, new_game}, new_game}
+    else
+      {:reply, {:ok, game}, game}
+    end
+  end
+
+  @impl true
+  def handle_call({:show_three, player}, _from, game) do
+    if game.status == :playing do
+      new_game = Game.show_three(game, player)
+      broadcast(new_game, {:show_three, player})
+      {:reply, new_game, new_game}
+    else
+      {:reply, game, game}
+    end
+  end
+
+  @impl true
+  def handle_call({:play_series, player, serie}, _from, game) do
+    if game.status == :playing do
+      {result, new_game} = Game.play_serie(game, player, serie)
+      broadcast(new_game, {:play_series, result, player})
+      {:reply, {result, new_game}, new_game}
+    else
+      {:reply, {:ok, game}, game}
+    end
+  end
+
 
 end

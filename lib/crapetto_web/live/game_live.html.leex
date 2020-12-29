@@ -56,7 +56,7 @@
     <%= if Enum.empty?(stack) do %>
     <div class="w-32 h-48 bg-gray-300 rounded-md flex justify-center items-center text-white text-2xl font-extrabold"></div>
     <% else %>
-    <% [{_, c, n}, _] = stack %>
+    <% [{_, c, n}| _] = stack %>
     <div class="w-32 h-48 bg-<%=c%>-300 rounded-md flex justify-center items-center text-white text-2xl font-extrabold"><%=n%></div>
     <% end %>
 
@@ -109,7 +109,7 @@
 <div class="flex-initial m-1">
 <div class="flex text-center text-white rounded-md justify-center items-center text-2xl  w-32 h-48 font-extrabold bg-<%= if c == nil, do: "green", else: c %>-600"><%= if c != nil, do: n %></div>
 <div class="text-center text-black justify-center items-center text-xl w-32 h-8"></div>
-<div class="text-center text-white justify-center items-center text-xl w-32 h-8 bg-gray-800"><%= %{0 => "E", 1 => "R", 2 => "T", 3 => "Y", 4 => "U", 5 => "I"}[s] %></div>
+<div class="text-center text-white justify-center items-center text-xl w-32 h-8 bg-gray-800"><%= %{1 => "E", 2 => "R", 3 => "T", 4 => "Y", 5 => "U", 6 => "I"}[s] %></div>
 </div>
 <% end %>
 
