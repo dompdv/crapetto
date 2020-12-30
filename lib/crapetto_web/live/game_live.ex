@@ -7,11 +7,12 @@ defmodule CrapettoWeb.GameLive do
 
 #  alias CrapettoWeb.Router.Helpers, as: Routes
 
-@lock_time 3
+@lock_time 5
+@lock_time_three 1
 
 @impl true
 def mount(_params, %{"user_token" => token}, socket) do
-  # Find the current user from the session and put it in the LiveView sessio,n
+  # Find the current user from the session and put it in the LiveView session
   current_user = Accounts.get_user_by_session_token(token)
 
   if connected?(socket) do
@@ -85,7 +86,9 @@ def handle_event("keydown", %{"key" => key}, socket) do
         "Y" -> GameServer.play_series(game_pid, player, 4)
         "U" -> GameServer.play_series(game_pid, player, 5)
         "P" -> g = GameServer.show_three(game_pid, player)
-              {:ok, g}
+              GameServer.lock_player(game_pid, player, @lock_time_three)
+              Process.send_after(self(), :unlock_countdown, 1000)
+                {:ok, g}
         _ -> {:ok, nil}
       end
     if result == :error do
@@ -138,6 +141,7 @@ end
 
 def handle_info(:start, socket) do
   IO.inspect({"start"})
+  Process.send_after(self(), :unlock_countdown, 1000)
   {:noreply, refresh_game(socket)}
 end
 

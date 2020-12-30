@@ -2,7 +2,7 @@ defmodule Crapetto.Game do
   @enforce_keys [:id_game, :owner, :id_owner]
   defstruct [
     :id_game, :owner, :id_owner, status: :starting, winner: nil, locked_to_join: false,
-    num_players: 0, players: [], players_decks: %{}, players_lock: %{}, players_scores: nil,
+    num_players: 0, players: [], players_decks: %{}, players_lock: %{}, players_scores: nil, last_play_score: %{},
     stacks: %{}, series: 0]
 
   # Colors = :red :blue :green :yellow
@@ -10,6 +10,7 @@ defmodule Crapetto.Game do
   #          :playing  = players are currently playing
   #          :over = the game is naturally over
   #          :terminated = the game has been forced to terminate
+  #          :overall_over = the overall game is over
 
 
   def new_game(id_owner, owner) do
@@ -114,9 +115,15 @@ defmodule Crapetto.Game do
       new_player_deck = %{player_deck | ligretto: ligretto, series: series}
       empty_ligretto = Enum.count(ligretto) == 0
       %{status: status, winner: winner} = game
-      %{game | players_decks: Map.put(game.players_decks, player, new_player_deck),
-                     status: (if empty_ligretto, do: :over, else: status),
-                     winner: (if empty_ligretto and winner == nil, do: player, else: winner)}
+      game =
+        %{game | players_decks: Map.put(game.players_decks, player, new_player_deck),
+                      status: (if empty_ligretto, do: :over, else: status),
+                      winner: (if empty_ligretto and winner == nil, do: player, else: winner)}
+      if game.status == :over do
+        update_score(game)
+      else
+        game
+      end
     end
   end
 
@@ -184,9 +191,16 @@ defmodule Crapetto.Game do
           # Si on vide le ligretto, on a un gagnant !
           empty_ligretto = Enum.count(r_ligretto) == 0
           %{status: status, winner: winner} = game
-          {:ok, %{game | players_decks: Map.put(game.players_decks, player, new_player_deck),
+          game =
+            %{game | players_decks: Map.put(game.players_decks, player, new_player_deck),
                          status: (if empty_ligretto, do: :over, else: status),
-                         winner: (if empty_ligretto and winner == nil, do: player, else: winner)}}
+                         winner: (if empty_ligretto and winner == nil, do: player, else: winner)}
+          if game.status == :over do
+            {:ok, update_score(game)}
+          else
+            {:ok, game}
+          end
+
         end
     end
   end
@@ -267,11 +281,46 @@ defmodule Crapetto.Game do
       series: series,
       stacks: stacks,
       locked_to_join: true,
-      players_scores: players_scores
+      players_scores: players_scores,
+      players_lock: players |> Enum.map(fn x -> {x, 10} end) |> Map.new()
     }
     # Fill the ligretto
       |> fill_ligretto()
       |> fill_series()
+  end
+
+
+  def update_score(%Crapetto.Game{status: :over, players: players, players_scores: players_scores, stacks: stacks, players_decks: players_decks} = game) do
+    # Count cards in the stacks
+    count_stacks =
+      stacks
+      |> Enum.map(fn {_, stack} -> Enum.map(stack, fn {p, _, _} -> p end) end)
+      |> List.flatten()
+      |> Enum.frequencies()
+    # Default to 0 if no cards
+    count_stacks = Map.merge(players |> Enum.map(fn x -> {x, 0} end) |> Map.new(), count_stacks)
+    # Count number of remaining cards in the ligretto
+    ligrettos =
+      players_decks
+      |> Enum.map(fn {player, %{ligretto: ligretto}} -> {player, Enum.count(ligretto)} end)
+      |> Map.new()
+    # Create a nice structure to log all this
+    last_play_score =
+      players
+      |> Enum.map(fn player -> {player, {count_stacks[player], ligrettos[player], count_stacks[player] - 2 * ligrettos[player] }} end)
+      |> Map.new()
+
+    last_score_only = last_play_score |> Enum.map(fn {p, {_,_,s}} -> {p, s} end) |> Map.new()
+
+    players_scores =
+      players_scores
+      |> Enum.map(fn {player, previous_score} -> {player, previous_score + last_score_only[player]} end)
+      |> Map.new()
+
+    %Crapetto.Game{game |
+      players_scores: players_scores,
+      last_play_score: last_play_score
+    }
   end
 
   def restart_game(game) do

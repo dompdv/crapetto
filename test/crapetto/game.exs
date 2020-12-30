@@ -67,4 +67,20 @@ defmodule Crapetto.GameTest do
     #IO.inspect(res)
     assert res == :ok
   end
-end
+  test "Compute scores", %{game: game} do
+    game = Game.start_game(game)
+    %{players_decks: %{"Bob" => %{displayed: displayed} = player_deck}} = game
+    displayed = [{"Bob", :blue, 1} |displayed]
+    new_player_deck = %{player_deck | displayed: displayed}
+    game = %{game | players_decks: Map.put(game.players_decks, "Bob", new_player_deck)}
+    #IO.inspect(game.players_decks["Bob"])
+    {res, game} = Game.play_displayed(game, "Bob")
+    #IO.inspect(game.stacks)
+    game = %{game | status: :over}
+    game = Game.update_score(game)
+    assert res == :ok
+    assert game.players_scores["Alice"] == -20
+    assert game.players_scores["Bob"] == -19
+    assert game.players_scores["Charles"] == -20
+  end
+  end
