@@ -1,8 +1,8 @@
 defmodule Crapetto.Game do
   @enforce_keys [:id_game, :owner, :id_owner]
   defstruct [
-    :id_game, :owner, :id_owner, status: :starting, winner: nil,
-    num_players: 0, players: [], players_decks: %{},
+    :id_game, :owner, :id_owner, status: :starting, winner: nil, locked_to_join: false,
+    num_players: 0, players: [], players_decks: %{}, players_lock: %{}, players_scores: nil,
     stacks: %{}, series: 0]
 
   # Colors = :red :blue :green :yellow
@@ -17,14 +17,22 @@ defmodule Crapetto.Game do
     %Crapetto.Game{id_game: id_game, owner: owner, id_owner: id_owner}
   end
 
-  def add_player(%Crapetto.Game{status: :starting, players: players} = game, a_player) do
-    new_players = if Enum.member?(players, a_player), do: players, else: [a_player | players]
-    %Crapetto.Game{game | players: new_players, num_players: Enum.count(new_players)}
+  def add_player(%Crapetto.Game{status: :starting, players: players, locked_to_join: locked, num_players: num_players} = game, a_player) do
+    if not locked and num_players < 6 do
+      new_players = if Enum.member?(players, a_player), do: players, else: [a_player | players]
+      %Crapetto.Game{game | players: new_players, num_players: Enum.count(new_players)}
+    else
+      game
+    end
   end
 
-  def remove_player(%Crapetto.Game{status: :starting, players: players} = game, a_player) do
-    new_players = List.delete(players, a_player)
-    %Crapetto.Game{game | players: new_players, num_players: Enum.count(new_players)}
+  def remove_player(%Crapetto.Game{status: :starting, players: players, locked_to_join: locked} = game, a_player) do
+    if not locked do
+      new_players = List.delete(players, a_player)
+      %Crapetto.Game{game | players: new_players, num_players: Enum.count(new_players)}
+    else
+      game
+    end
   end
 
   def get_deck(game, player) do
@@ -198,7 +206,12 @@ defmodule Crapetto.Game do
     )
   end
 
-  def start_game(%Crapetto.Game{status: :starting, players: players, num_players: num_players} = game) do
+  def start_game(%Crapetto.Game{status: :starting, players: players, num_players: num_players, players_scores: players_scores} = game) do
+    players_scores =
+      case players_scores do
+        nil -> players |> Enum.map(fn x -> {x, 0} end) |> Map.new()
+        _ -> players_scores
+      end
     series = case num_players do
                   2 -> 5
                   3 -> 4
@@ -217,10 +230,21 @@ defmodule Crapetto.Game do
       |> Map.new()
     stacks = 1..(num_players * 4) |> Enum.map(fn x -> {x, []} end) |> Map.new()
     # Game is initialized
-    %Crapetto.Game{game | status: :playing, players_decks: players_decks, series: series, stacks: stacks}
+    %Crapetto.Game{game |
+      status: :playing,
+      players_decks: players_decks,
+      series: series,
+      stacks: stacks,
+      locked_to_join: true,
+      players_scores: players_scores
+    }
     # Fill the ligretto
       |> fill_ligretto()
       |> fill_series()
+  end
+
+  def restart_game(game) do
+    start_game(%{game | status: :starting})
   end
 
   def terminate_game(%Crapetto.Game{status: :playing} = game) do

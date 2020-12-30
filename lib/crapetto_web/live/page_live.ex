@@ -3,6 +3,7 @@ defmodule CrapettoWeb.PageLive do
   alias CrapettoWeb.Presence
   alias Crapetto.Accounts
   alias Crapetto.Casino
+  alias Crapetto.GameServer
   alias CrapettoWeb.Router.Helpers, as: Routes
 
   @impl true
@@ -77,6 +78,8 @@ defmodule CrapettoWeb.PageLive do
     user = socket.assigns.current_user
     id_user = user.id
     {:ok, id_game} = Casino.create(id_user, user.email)
+    game_pid  = Casino.game_pid(id_game)
+    GameServer.add_player(game_pid, socket.assigns.current_user.email)
     IO.inspect({"CLICK", user.email, id_user})
     {:noreply, push_redirect(socket, to: "/games/#{id_game}")}
   end
