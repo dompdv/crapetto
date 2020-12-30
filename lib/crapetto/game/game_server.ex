@@ -44,6 +44,19 @@ defmodule Crapetto.GameServer do
     GenServer.call(game, {:show_three, player})
   end
 
+  def is_locked(game, player) do
+    GenServer.call(game, {:is_locked, player})
+  end
+
+  def countdown_player(game, player) do
+    GenServer.call(game, {:countdown_player, player})
+  end
+
+  def lock_player(game, player, countdown) do
+    GenServer.call(game, {:lock_player, player, countdown})
+  end
+
+
   @impl true
   def init(%{owner: owner, id_owner: id_owner}) do
     new_game = Game.new_game(id_owner, owner)
@@ -133,5 +146,36 @@ defmodule Crapetto.GameServer do
     end
   end
 
+
+  @impl true
+  def handle_call({:is_locked, player}, _from, game) do
+    if game.status == :playing do
+      {:reply, Game.is_locked(game, player), game}
+    else
+      {:reply, false, game}
+    end
+  end
+
+  @impl true
+  def handle_call({:lock_player, player, countdown}, _from, game) do
+    if game.status == :playing do
+      new_game = Game.lock_player(game, player, countdown)
+      broadcast(new_game, {:lock_player, player})
+      {:reply, new_game, new_game}
+    else
+      {:reply, game, game}
+    end
+  end
+
+  @impl true
+  def handle_call({:countdown_player, player}, _from, game) do
+    if game.status == :playing do
+      new_game = Game.countdown_player(game, player)
+      broadcast(new_game, {:countdown_player, player})
+      {:reply, new_game, new_game}
+    else
+      {:reply, game, game}
+    end
+  end
 
 end

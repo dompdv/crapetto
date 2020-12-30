@@ -65,6 +65,37 @@ defmodule Crapetto.Game do
     )
   end
 
+  def is_locked(%Crapetto.Game{players: players, players_lock: players_lock}, player) do
+    Enum.member?(players, player) and Map.has_key?(players_lock, player)
+  end
+  def reamining_locked_count(%Crapetto.Game{players: players, players_lock: players_lock}, player) do
+    if Enum.member?(players, player) and Map.has_key?(players_lock, player) do
+      Map.get(players_lock, player)
+    else
+      0
+    end
+  end
+
+  def lock_player(%Crapetto.Game{players: players, players_lock: players_lock} = game, player, countdown) do
+    if Enum.member?(players, player) do
+      %{game | players_lock: Map.put(players_lock, player, countdown)}
+    else
+      game
+    end
+  end
+  def countdown_player(%Crapetto.Game{players: players, players_lock: players_lock} = game, player) do
+    if Enum.member?(players, player) and Map.has_key?(players_lock, player) do
+      players_lock =
+        case players_lock[player] do
+          1 -> Map.delete(players_lock, player)
+          count -> Map.put(players_lock, player, count - 1)
+        end
+      %{game | players_lock: players_lock}
+    else
+      game
+    end
+  end
+
   def deck_to_ligretto(game, player) do
     %{players_decks: %{^player => %{deck: deck, ligretto: ligretto} = player_deck}} = game
     {card, deck}  = List.pop_at(deck, 0)

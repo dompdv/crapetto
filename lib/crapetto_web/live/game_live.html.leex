@@ -46,7 +46,7 @@
 
 
 <%= if @game.status == :playing  do %>
-<% sizes = %{2 => "w-32 h-48", 3 => "w-32 h-48", 4 => "w-32 h-48", 5 => "w-32 h-48", 6 => "w-32 h-48"}[@game.num_players]
+<% sizes = %{2 => "w-12 h-24", 3 => "w-12 h-24", 4 => "w-24 h-36", 5 => "w-32 h-48", 6 => "w-32 h-48"}[@game.num_players]
     [wsize, hsize] = String.split(sizes, " ") %>
 <div class="container" phx-window-keydown="keydown" phx-throttle="10" phx-window-keyup="keyup">
 <div class="flex flex-row">
@@ -88,7 +88,10 @@
 
 </div>
 <!-- Player deck -->
-<div class="flex flex-row bg-blue-100 p-4 m-2">
+<% locked = Game.is_locked(@game, @current_user.email)
+  countdown = Game.reamining_locked_count(@game, @current_user.email)
+%>
+<div class="flex flex-row bg-<%= if locked, do: "red-900", else: "blue-100" %> p-4 m-2">
  <% player_deck = Game.get_deck(@game, @current_user.email) %>
 
 <!-- Ligretto -->
@@ -104,7 +107,7 @@
  <% {_, c, n} = Game.get_displayed_top(@game, @current_user.email) %>
 <div class="flex text-center text-white rounded-md justify-center items-center text-2xl  <%= sizes %> font-extrabold bg-<%= if c == nil, do: "gray", else: c %>-600"><%= if c != nil, do: n %></div>
 <div class="text-center text-black justify-center items-center text-xl <%= wsize %> h-8"><%= Enum.count(player_deck.displayed) %></div>
-<div class="text-center text-white justify-center items-center text-xl <%= wsize %> h-8 bg-gray-800">Z</div>
+<div class="text-center text-white justify-center items-center text-xl <%= wsize %> h-8 bg-gray-800">Z | P</div>
 </div>
 
 <!-- Series -->
@@ -115,7 +118,11 @@
 <div class="text-center text-white justify-center items-center text-xl <%= wsize %> h-8 bg-gray-800"><%= %{1 => "E", 2 => "R", 3 => "T", 4 => "Y", 5 => "U", 6 => "I"}[s] %></div>
 </div>
 <% end %>
-
+<%= if locked do %>
+<div class="flex-initial m-1">
+<div class="flex text-center text-white justify-center items-center text-2xl  <%= sizes %> font-extrabold"><%= countdown %></div>
+</div>
+<% end %>
 
 </div>
 

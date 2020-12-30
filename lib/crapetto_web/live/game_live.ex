@@ -7,6 +7,7 @@ defmodule CrapettoWeb.GameLive do
 
 #  alias CrapettoWeb.Router.Helpers, as: Routes
 
+@lock_time 3
 
 @impl true
 def mount(_params, %{"user_token" => token}, socket) do
@@ -69,23 +70,32 @@ end
 
 @impl true
 def handle_event("keydown", %{"key" => key}, socket) do
-  if socket.assigns.keyup do
+  game_pid  = socket.assigns.game_pid
+  player = socket.assigns.current_user.email
+  IO.inspect({"keydown", key, socket.assigns.keyup, GameServer.is_locked(game_pid, player)})
+  if socket.assigns.keyup and not (GameServer.is_locked(game_pid, player)) do
     IO.inspect({"Keydown", String.upcase(key)})
-    game_pid  = socket.assigns.game_pid
     {result, game} =
       case String.upcase(key) do
-        "A" -> GameServer.play_ligretto(game_pid, socket.assigns.current_user.email)
-        "Z" -> GameServer.play_displayed(game_pid, socket.assigns.current_user.email)
-        "E" -> GameServer.play_series(game_pid, socket.assigns.current_user.email, 1)
-        "R" -> GameServer.play_series(game_pid, socket.assigns.current_user.email, 2)
-        "T" -> GameServer.play_series(game_pid, socket.assigns.current_user.email, 3)
-        "Y" -> GameServer.play_series(game_pid, socket.assigns.current_user.email, 4)
-        "U" -> GameServer.play_series(game_pid, socket.assigns.current_user.email, 5)
-        "P" -> g = GameServer.show_three(game_pid, socket.assigns.current_user.email)
+        "A" -> GameServer.play_ligretto(game_pid, player)
+        "Z" -> GameServer.play_displayed(game_pid, player)
+        "E" -> GameServer.play_series(game_pid, player, 1)
+        "R" -> GameServer.play_series(game_pid, player, 2)
+        "T" -> GameServer.play_series(game_pid, player, 3)
+        "Y" -> GameServer.play_series(game_pid, player, 4)
+        "U" -> GameServer.play_series(game_pid, player, 5)
+        "P" -> g = GameServer.show_three(game_pid, player)
               {:ok, g}
         _ -> {:ok, nil}
       end
-    {:noreply, assign(socket, :keyup,  false)}
+    if result == :error do
+      IO.inspect("ERRRRRROOOOORR")
+      GameServer.lock_player(game_pid, player, @lock_time)
+      Process.send_after(self(), :unlock_countdown, 1000)
+      {:noreply, assign(socket, :keyup,  false)}
+    else
+      {:noreply, assign(socket, :keyup,  false)}
+    end
   else
     {:noreply, socket}
   end
@@ -104,6 +114,17 @@ end
 defp refresh_game(socket) do
   id_game = socket.assigns.id_game
   assign(socket, game: Casino.lookup(id_game))
+end
+
+def handle_info(:unlock_countdown, socket) do
+  IO.inspect({"unlock_countdown"})
+  game_pid  = socket.assigns.game_pid
+  player = socket.assigns.current_user.email
+  GameServer.countdown_player(game_pid, player)
+  if GameServer.is_locked(game_pid, player) do
+    Process.send_after(self(), :unlock_countdown, 1000)
+  end
+  {:noreply, refresh_game(socket)}
 end
 
 def handle_info({:add_player, id_player}, socket) do
@@ -141,6 +162,18 @@ end
 @impl true
 def handle_info({:show_three, _player}, socket) do
   IO.inspect({"handle show_three"})
+  {:noreply, refresh_game(socket)}
+end
+
+@impl true
+def handle_info({:lock_player, _player}, socket) do
+  IO.inspect({"handle lock_player"})
+  {:noreply, refresh_game(socket)}
+end
+
+@impl true
+def handle_info({:countdown_player, _player}, socket) do
+  IO.inspect({"handle countdown_player"})
   {:noreply, refresh_game(socket)}
 end
 
