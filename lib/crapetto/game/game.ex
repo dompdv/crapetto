@@ -1,9 +1,9 @@
 defmodule Crapetto.Game do
   @enforce_keys [:id_game, :owner, :id_owner]
   defstruct [
-    :id_game, :owner, :id_owner, status: :starting, winner: nil, locked_to_join: false,
+    :id_game, :owner, :id_owner, status: :starting, winner: nil, locked_to_join: false, overall_winner: nil,
     num_players: 0, players: [], players_decks: %{}, players_lock: %{}, players_scores: nil, last_play_score: %{},
-    stacks: %{}, series: 0]
+    stacks: %{}, series: 0, score_to_win: 100]
 
   # Colors = :red :blue :green :yellow
   # Status : :starting = waiting to start
@@ -317,10 +317,22 @@ defmodule Crapetto.Game do
       |> Enum.map(fn {player, previous_score} -> {player, previous_score + last_score_only[player]} end)
       |> Map.new()
 
-    %Crapetto.Game{game |
+    # Do we have a winner
+    sorted_players = Enum.sort(Enum.to_list(players_scores), fn {_,x}, {_,y} -> x >= y end)
+    {overall_winner, score} = hd(sorted_players)
+    if score >= game.score_to_win do
+      %Crapetto.Game{game |
+      status: :overall_over,
+      overall_winner: overall_winner,
       players_scores: players_scores,
       last_play_score: last_play_score
     }
+    else
+      %Crapetto.Game{game |
+      players_scores: players_scores,
+      last_play_score: last_play_score
+    }
+    end
   end
 
   def restart_game(game) do
