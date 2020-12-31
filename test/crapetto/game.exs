@@ -83,8 +83,15 @@ defmodule Crapetto.GameTest do
     assert game.players_scores["Bob"] == -19
     assert game.players_scores["Charles"] == -20
   end
-  test "Overall winner", %{game: game} do
+
+  test "Overall winner", %{game: _game} do
+    game = Game.new_game(100, "dompdv")
+    game = Game.add_player(game, "Alice")
+    game = Game.add_player(game, "Bob")
+    game = Game.add_player(game, "Charles")
+
     game = Game.start_game(game)
+    game = %{game | score_to_win: 0}
     %{players_decks: %{"Bob" => player_deck}} = game
     ligretto = [{"Bob", :blue, 1}]
     new_player_deck = %{player_deck | ligretto: ligretto}
@@ -92,10 +99,10 @@ defmodule Crapetto.GameTest do
     #IO.inspect(game.players_decks["Bob"])
     {_res, game} = Game.play_ligretto(game, "Bob")
     #IO.inspect(game.stacks)
-    game = %{game | status: :over, score_to_win: 0}
-    game = Game.update_score(game)
     #IO.inspect(game)
     assert game.overall_winner == "Bob"
     assert game.status == :overall_over
+    assert game.players_scores["Bob"] == 1
+
   end
   end

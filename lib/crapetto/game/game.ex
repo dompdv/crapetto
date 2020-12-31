@@ -317,7 +317,7 @@ defmodule Crapetto.Game do
       |> Enum.map(fn {player, previous_score} -> {player, previous_score + last_score_only[player]} end)
       |> Map.new()
 
-    # Do we have a winner
+      # Do we have a winner
     sorted_players = Enum.sort(Enum.to_list(players_scores), fn {_,x}, {_,y} -> x >= y end)
     {overall_winner, score} = hd(sorted_players)
     if score >= game.score_to_win do
