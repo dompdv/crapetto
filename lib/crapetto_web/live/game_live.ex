@@ -66,7 +66,6 @@ end
 
 @impl true
 def handle_event("join", _params, socket) do
-  id_game = socket.assigns.id_game
   game_pid  = socket.assigns.game_pid
   game = GameServer.add_player(game_pid, socket.assigns.current_user.email)
   {:noreply, assign(socket, :game,  game)}
@@ -74,7 +73,6 @@ end
 
 @impl true
 def handle_event("quit", _params, socket) do
-  id_game = socket.assigns.id_game
   game_pid  = socket.assigns.game_pid
   game = GameServer.remove_player(game_pid, socket.assigns.current_user.email)
   {:noreply, assign(socket, :game,  game)}
@@ -82,7 +80,7 @@ end
 
 @impl true
 def handle_event("launch_game", _params, socket) do
-  id_game = socket.assigns.id_game
+  #id_game = socket.assigns.id_game
   game_pid  = socket.assigns.game_pid
   game = GameServer.start_game(game_pid)
   {:noreply, assign(socket, :game,  game)}
@@ -109,7 +107,7 @@ def handle_event("keydown", %{"key" => key}, socket) do
 end
 
 
-def handle_event("keydown", params, socket) do
+def handle_event("keydown", _params, socket) do
   {:noreply, socket}
 end
 
@@ -155,10 +153,10 @@ def handle_info(:unlock_countdown, socket) do
   {:noreply, refresh_game(socket)}
 end
 
-def handle_info({:add_player, id_player}, socket) do
+def handle_info({:add_player, _id_player}, socket) do
   {:noreply, refresh_game(socket)}
 end
-def handle_info({:remove_player, id_player}, socket) do
+def handle_info({:remove_player, _id_player}, socket) do
   {:noreply, refresh_game(socket)}
 end
 
@@ -202,7 +200,7 @@ def handle_info({:switch_stuck_player, _player}, socket) do
 end
 
 @impl true
-def handle_info(params, socket) do
+def handle_info(_params, socket) do
   {:noreply, socket}
 end
 
