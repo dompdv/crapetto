@@ -16,7 +16,6 @@ def mount(_params, %{"user_token" => token}, socket) do
   current_user = Accounts.get_user_by_session_token(token)
 
   if connected?(socket) do
-    IO.inspect("CONNECTED2")
     # Subscribe to the topic where news are broacasted about all games (creation, end, change of status,...)
   end
 
@@ -25,14 +24,12 @@ end
 
 
 defp subscribe(id_game) do
-  IO.inspect("SUBSCRIBE game:#{id_game}")
   Phoenix.PubSub.unsubscribe(Crapetto.PubSub, "game:#{id_game}")
   Phoenix.PubSub.subscribe(Crapetto.PubSub, "game:#{id_game}")
 end
 
 @impl true
-def handle_params(%{"id" => id_game} = params, uri, socket) do
-  IO.inspect({"HANDLE PARAMS", params, uri})
+def handle_params(%{"id" => id_game}, _uri, socket) do
   case Casino.lookup(id_game) do
     :error -> {:noreply , push_redirect(socket, to: "/")}
     game ->  subscribe(id_game)
@@ -41,58 +38,21 @@ def handle_params(%{"id" => id_game} = params, uri, socket) do
   end
 end
 
-
-@impl true
-def handle_event("join", _params, socket) do
-  id_game = socket.assigns.id_game
-  game_pid  = socket.assigns.game_pid
-  game = GameServer.add_player(game_pid, socket.assigns.current_user.email)
-  IO.inspect({"JOIN", game_pid, id_game, game})
-  {:noreply, assign(socket, :game,  game)}
-end
-
-@impl true
-def handle_event("quit", _params, socket) do
-  id_game = socket.assigns.id_game
-  game_pid  = socket.assigns.game_pid
-  game = GameServer.remove_player(game_pid, socket.assigns.current_user.email)
-  IO.inspect({"QUIT", game_pid, id_game, game})
-  {:noreply, assign(socket, :game,  game)}
-end
-
-@impl true
-def handle_event("launch_game", _params, socket) do
-  id_game = socket.assigns.id_game
-  game_pid  = socket.assigns.game_pid
-  game = GameServer.start_game(game_pid)
-  IO.inspect({"launch_game", game_pid, id_game, game})
-  {:noreply, assign(socket, :game,  game)}
-end
-
-@impl true
-def handle_event("keydown", %{"key" => key}, socket) do
+defp play(socket, what) do
   game_pid  = socket.assigns.game_pid
   player = socket.assigns.current_user.email
-  IO.inspect({"keydown", key, socket.assigns.keyup, GameServer.is_locked(game_pid, player)})
-  if socket.assigns.keyup and not (GameServer.is_locked(game_pid, player)) do
-    IO.inspect({"Keydown", String.upcase(key)})
-    {result, game} =
-      case String.upcase(key) do
-        "A" -> GameServer.play_ligretto(game_pid, player)
-        "Z" -> GameServer.play_displayed(game_pid, player)
-        "E" -> GameServer.play_series(game_pid, player, 1)
-        "R" -> GameServer.play_series(game_pid, player, 2)
-        "T" -> GameServer.play_series(game_pid, player, 3)
-        "Y" -> GameServer.play_series(game_pid, player, 4)
-        "U" -> GameServer.play_series(game_pid, player, 5)
-        "P" -> g = GameServer.show_three(game_pid, player)
+  if not (GameServer.is_locked(game_pid, player)) do
+    {result, _game} =
+      case what do
+        :ligretto-> GameServer.play_ligretto(game_pid, player)
+        :displayed -> GameServer.play_displayed(game_pid, player)
+        {:series, n} -> GameServer.play_series(game_pid, player, n)
+        :show_three -> g = GameServer.show_three(game_pid, player)
               GameServer.lock_player(game_pid, player, @lock_time_three)
               Process.send_after(self(), :unlock_countdown, 1000)
                 {:ok, g}
-        _ -> {:ok, nil}
       end
     if result == :error do
-      IO.inspect("ERRRRRROOOOORR")
       GameServer.lock_player(game_pid, player, @lock_time)
       Process.send_after(self(), :unlock_countdown, 1000)
       {:noreply, assign(socket, :keyup,  false)}
@@ -104,22 +64,80 @@ def handle_event("keydown", %{"key" => key}, socket) do
   end
 end
 
+@impl true
+def handle_event("join", _params, socket) do
+  id_game = socket.assigns.id_game
+  game_pid  = socket.assigns.game_pid
+  game = GameServer.add_player(game_pid, socket.assigns.current_user.email)
+  {:noreply, assign(socket, :game,  game)}
+end
+
+@impl true
+def handle_event("quit", _params, socket) do
+  id_game = socket.assigns.id_game
+  game_pid  = socket.assigns.game_pid
+  game = GameServer.remove_player(game_pid, socket.assigns.current_user.email)
+  {:noreply, assign(socket, :game,  game)}
+end
+
+@impl true
+def handle_event("launch_game", _params, socket) do
+  id_game = socket.assigns.id_game
+  game_pid  = socket.assigns.game_pid
+  game = GameServer.start_game(game_pid)
+  {:noreply, assign(socket, :game,  game)}
+end
+
+
+@impl true
+def handle_event("keydown", %{"key" => key}, socket) do
+  if socket.assigns.keyup do
+      case String.upcase(key) do
+        "A" -> play(socket, :ligretto)
+        "Z" -> play(socket, :displayed)
+        "E" -> play(socket, {:series, 1})
+        "R" -> play(socket, {:series, 2})
+        "T" -> play(socket, {:series, 3})
+        "Y" -> play(socket, {:series, 4})
+        "U" -> play(socket, {:series, 5})
+        "P" -> play(socket, :show_three)
+        _ -> {:noreply, socket}
+      end
+  else
+    {:noreply, socket}
+  end
+end
+
+
 def handle_event("keydown", params, socket) do
-  IO.inspect({"Keydown", params})
   {:noreply, socket}
 end
 
 def handle_event("keyup", _params, socket) do
-  IO.inspect({"Keyup"})
   {:noreply, assign(socket, :keyup,  true)}
 end
 
 def handle_event("stuck", _params, socket) do
-  IO.inspect({"stuck"})
   game_pid  = socket.assigns.game_pid
   game = GameServer.switch_stuck_player(game_pid, socket.assigns.current_user.email)
-  IO.inspect(game.stuck_players)
   {:noreply, assign(socket, :game,  game)}
+end
+
+
+def handle_event("card_click", %{"card" => "ligretto"}, socket) do
+  play(socket, :ligretto)
+end
+def handle_event("card_click", %{"card" => "displayed"}, socket) do
+  play(socket, :displayed)
+end
+def handle_event("card_click", %{"card" => "series", "serie" => serie}, socket) do
+  parsed = Integer.parse(serie)
+  cond do
+    parsed == :error -> {:noreply, socket}
+    true ->
+      {serie, _} = parsed
+      play(socket, {:series, serie})
+    end
 end
 
 defp refresh_game(socket) do
@@ -128,7 +146,6 @@ defp refresh_game(socket) do
 end
 
 def handle_info(:unlock_countdown, socket) do
-  IO.inspect({"unlock_countdown"})
   game_pid  = socket.assigns.game_pid
   player = socket.assigns.current_user.email
   GameServer.countdown_player(game_pid, player)
@@ -139,64 +156,53 @@ def handle_info(:unlock_countdown, socket) do
 end
 
 def handle_info({:add_player, id_player}, socket) do
-  IO.inspect({"add_player", id_player})
   {:noreply, refresh_game(socket)}
 end
 def handle_info({:remove_player, id_player}, socket) do
-  IO.inspect({"add_player", id_player})
   {:noreply, refresh_game(socket)}
 end
 
 def handle_info(:start, socket) do
-  IO.inspect({"start"})
   Process.send_after(self(), :unlock_countdown, 1000)
   {:noreply, refresh_game(socket)}
 end
 
 @impl true
 def handle_info({:play_displayed, _result, _player}, socket) do
-  IO.inspect({"handle play_displayed"})
   {:noreply, refresh_game(socket)}
 end
 
 @impl true
 def handle_info({:play_series, _result, _player}, socket) do
-  IO.inspect({"handle play_displayed"})
   {:noreply, refresh_game(socket)}
 end
 
 @impl true
 def handle_info({:play_ligretto, _result, _player}, socket) do
-  IO.inspect({"handle play_ligretto"})
   {:noreply, refresh_game(socket)}
 end
 
 @impl true
 def handle_info({:show_three, _player}, socket) do
-  IO.inspect({"handle show_three"})
   {:noreply, refresh_game(socket)}
 end
 
 @impl true
 def handle_info({:lock_player, _player}, socket) do
-  IO.inspect({"handle lock_player"})
   {:noreply, refresh_game(socket)}
 end
 
 @impl true
 def handle_info({:countdown_player, _player}, socket) do
-  IO.inspect({"handle countdown_player"})
   {:noreply, refresh_game(socket)}
 end
 @impl true
 def handle_info({:switch_stuck_player, _player}, socket) do
-  IO.inspect({"handle switch_stuck_playe"})
   {:noreply, refresh_game(socket)}
 end
 
 @impl true
 def handle_info(params, socket) do
-  IO.inspect({"handle info", params})
   {:noreply, socket}
 end
 
