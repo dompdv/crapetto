@@ -16,6 +16,7 @@ def mount(_params, %{"user_token" => token}, socket) do
   current_user = Accounts.get_user_by_session_token(token)
 
   if connected?(socket) do
+    Process.send_after(self(), :unlock_countdown, 1000)
     # Subscribe to the topic where news are broacasted about all games (creation, end, change of status,...)
   end
 
@@ -89,6 +90,7 @@ end
 
 @impl true
 def handle_event("keydown", %{"key" => key}, socket) do
+  IO.inspect({"keydown",key})
   if socket.assigns.keyup do
       case String.upcase(key) do
         "A" -> play(socket, :ligretto)
@@ -124,6 +126,9 @@ end
 
 def handle_event("card_click", %{"card" => "ligretto"}, socket) do
   play(socket, :ligretto)
+end
+def handle_event("card_click", %{"card" => "showthree"}, socket) do
+  play(socket, :show_three)
 end
 def handle_event("card_click", %{"card" => "displayed"}, socket) do
   play(socket, :displayed)
