@@ -90,7 +90,6 @@ end
 
 @impl true
 def handle_event("keydown", %{"key" => key}, socket) do
-  IO.inspect({"keydown",key})
   if socket.assigns.keyup do
       case String.upcase(key) do
         "A" -> play(socket, :ligretto)
