@@ -114,6 +114,14 @@ def handle_event("keyup", _params, socket) do
   {:noreply, assign(socket, :keyup,  true)}
 end
 
+def handle_event("stuck", _params, socket) do
+  IO.inspect({"stuck"})
+  game_pid  = socket.assigns.game_pid
+  game = GameServer.switch_stuck_player(game_pid, socket.assigns.current_user.email)
+  IO.inspect(game.stuck_players)
+  {:noreply, assign(socket, :game,  game)}
+end
+
 defp refresh_game(socket) do
   id_game = socket.assigns.id_game
   assign(socket, game: Casino.lookup(id_game))
@@ -178,6 +186,11 @@ end
 @impl true
 def handle_info({:countdown_player, _player}, socket) do
   IO.inspect({"handle countdown_player"})
+  {:noreply, refresh_game(socket)}
+end
+@impl true
+def handle_info({:switch_stuck_player, _player}, socket) do
+  IO.inspect({"handle switch_stuck_playe"})
   {:noreply, refresh_game(socket)}
 end
 

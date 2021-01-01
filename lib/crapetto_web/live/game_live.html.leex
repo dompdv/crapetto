@@ -1,4 +1,3 @@
-
 <%= if @game.status == :starting do %>
 <header class="bg-white shadow">
     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -46,9 +45,11 @@
 
 
 <%= if @game.status == :playing  do %>
+<div phx-window-keydown="keydown" phx-throttle="10" phx-window-keyup="keyup"><div>
+
 <% sizes = %{2 => "w-12 h-24", 3 => "w-12 h-24", 4 => "w-24 h-36", 5 => "w-32 h-48", 6 => "w-32 h-48"}[@game.num_players]
     [wsize, hsize] = String.split(sizes, " ") %>
-<div class="container" phx-window-keydown="keydown" phx-throttle="10" phx-window-keyup="keyup">
+<div class="container">
 <div class="flex flex-row">
 
 <!-- Stacks -->
@@ -71,7 +72,7 @@
 <div class="flex-initial bg-gray-100 p-4 m-2">
 <%= for player <- (@game.players |> Enum.filter(fn p -> p != @current_user.email end)) do %>
 
-<p class="text-center font-bold text-sm w-max inline-block"><%= player %></p>
+<p class="text-center font-bold text-sm w-max inline-block"><%= player %><br/> Score: <%=@game.players_scores[player] %></p>
 <div class="grid grid-cols-<%= 2 + @game.series %> gap-1">
         <% {_, c, n} = Game.get_ligretto_top(@game, player) %>
         <div class="text-center text-white rounded-sm text-md w-4 bg-<%= if c == nil, do: "green", else: c %>-600"><%= if c != nil, do: n %></div>
@@ -123,6 +124,9 @@
 <div class="flex text-center text-white justify-center items-center text-2xl  <%= sizes %> font-extrabold"><%= countdown %></div>
 </div>
 <% end %>
+<div class="flex-initial m-1">
+<button phx-click="stuck" class="flex text-center text-white justify-center rounded-md items-center <%= if MapSet.member?(@game.stuck_players, @current_user.email), do: "text-2xl bg-green-600", else: "text-sm bg-indigo-600" %> p-2">Stuck</button>
+</div>
 
 </div>
 
@@ -130,10 +134,41 @@
 </div>
 <% end %>
 
-<%= if @game.status == :over do %>
+<%= if @game.status == :over or @game.status == :overall_over do %>
 
-Fin winner <%= @game.winner %>
-mettre le comptage des points (score)
-faire plusieurs manches, avec départ avec compte à rebours
+
+<%= if @game.status == :overall_over do %>
+<div>And the winner is ....<%= @game.ovrall_winner %></div>
+<% end %>
+<% sorted_scores = Enum.sort(Enum.to_list(@game.players_scores), fn {_,x}, {_,y} -> x >= y end) %>
+<div><%= @game.winner %> won the last set</div>
+
+<table class="table-auto">
+  <thead class="justify-between">
+    <tr class="bg-gray-100">
+      <th class="p-2 text-left"><span class="text-gray-600">Players</span></th>
+      <th class="p-2 text-left">Cards</th>
+      <th class="p-2 text-left">Ligretto</th>
+      <th class="p-2 text-left">Score</th>
+      <th class="p-2 text-left">Global</th>
+    </tr>
+  </thead>
+  <tbody class="bg-white">
+    <%= for {player, global} <- sorted_scores do %>
+    <% {cards, ligretto, last_score} = @game.last_play_score[player] %>
+    <tr class="bg-white">
+      <td class="p-2 text-left"><%= player %> </td>
+      <td class="p-2 text-left"><%= cards %> </td>
+      <td class="p-2 text-left"><%= ligretto %> </td>
+      <td class="p-2 text-left"><%= last_score %> </td>
+      <td class="p-2 text-left"><%= global %> </td>
+    </tr>
+    <% end  %>
+  </tbody>
+</table>
+
+<%= if @game.status == :over and @game.owner == @current_user.email do %>
+    <button phx-click="launch_game" class="w-48 h-16 align-middle py-2 px-4 border border-transparent shadow-sm text-lg font-medium rounded-md text-white bg-green-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">New set</button>
+<% end %>
 
 <% end %>

@@ -21,11 +21,16 @@ defmodule Crapetto.GameServer do
     GenServer.call(game, {:remove, id_player})
   end
 
+  @spec start_game(atom | pid | {atom, any} | {:via, atom, any}) :: any
   def start_game(game) do
     GenServer.call(game, :start)
   end
   def terminate_game(game) do
     GenServer.call(game, :terminate)
+  end
+
+  def switch_stuck_player(game, player) do
+    GenServer.call(game, {:switch_stuck_player, player})
   end
 
 
@@ -85,6 +90,13 @@ defmodule Crapetto.GameServer do
   def handle_call({:remove, id_player}, _from, game) do
     new_game = Game.remove_player(game, id_player)
     broadcast(new_game, {:remove_player, id_player})
+    {:reply, new_game, new_game}
+  end
+
+  @impl true
+  def handle_call({:switch_stuck_player, id_player}, _from, game) do
+    new_game = Game.switch_stuck_player(game, id_player)
+    broadcast(new_game, {:switch_stuck_player, id_player})
     {:reply, new_game, new_game}
   end
 

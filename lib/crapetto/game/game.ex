@@ -3,7 +3,8 @@ defmodule Crapetto.Game do
   defstruct [
     :id_game, :owner, :id_owner, status: :starting, winner: nil, locked_to_join: false, overall_winner: nil,
     num_players: 0, players: [], players_decks: %{}, players_lock: %{}, players_scores: nil, last_play_score: %{},
-    stacks: %{}, series: 0, score_to_win: 100]
+    stacks: %{}, series: 0, score_to_win: 100,
+    stuck_players: MapSet.new()]
 
   # Colors = :red :blue :green :yellow
   # Status : :starting = waiting to start
@@ -33,6 +34,39 @@ defmodule Crapetto.Game do
       %Crapetto.Game{game | players: new_players, num_players: Enum.count(new_players)}
     else
       game
+    end
+  end
+
+  defp reshuffle(%{ligretto: ligretto, deck: deck, displayed: displayed, series: series} = player_deck) do
+    new_deck =
+      (ligretto ++ deck ++ displayed ++ Map.values(series))
+      |> Enum.shuffle()
+    {new_ligretto, new_deck} = Enum.split(new_deck, Enum.count(ligretto))
+    {temp_series, new_deck} = Enum.split(new_deck, Enum.count(series))
+    %{player_deck |
+      ligretto: new_ligretto,
+      deck: new_deck,
+      displayed: [],
+      series: Enum.zip(Map.keys(series), temp_series) |> Map.new()
+    }
+  end
+
+  def switch_stuck_player(%Crapetto.Game{stuck_players: stuck_players} = game, a_player) do
+    stuck_players =
+      if MapSet.member?(stuck_players, a_player) do
+        MapSet.delete(stuck_players, a_player)
+      else
+        MapSet.union(stuck_players, MapSet.new([a_player]))
+      end
+    if Enum.count(stuck_players) == game.num_players do
+      players_decks =
+        game.players_decks
+        |> Enum.map(fn {player, player_deck} -> {player, reshuffle(player_deck)} end)
+        |> Map.new()
+
+      %Crapetto.Game{game | stuck_players: MapSet.new(), players_decks: players_decks}
+    else
+      %Crapetto.Game{game | stuck_players: stuck_players}
     end
   end
 
@@ -118,7 +152,7 @@ defmodule Crapetto.Game do
       game =
         %{game | players_decks: Map.put(game.players_decks, player, new_player_deck),
                       status: (if empty_ligretto, do: :over, else: status),
-                      winner: (if empty_ligretto and winner == nil, do: player, else: winner)}
+                      winner: (if empty_ligretto, do: player, else: winner)}
       if game.status == :over do
         update_score(game)
       else
@@ -194,7 +228,7 @@ defmodule Crapetto.Game do
           game =
             %{game | players_decks: Map.put(game.players_decks, player, new_player_deck),
                          status: (if empty_ligretto, do: :over, else: status),
-                         winner: (if empty_ligretto and winner == nil, do: player, else: winner)}
+                         winner: (if empty_ligretto, do: player, else: winner)}
           if game.status == :over do
             {:ok, update_score(game)}
           else
@@ -251,7 +285,7 @@ defmodule Crapetto.Game do
     )
   end
 
-  def start_game(%Crapetto.Game{status: :starting, players: players, num_players: num_players, players_scores: players_scores} = game) do
+  def start_game(%Crapetto.Game{players: players, num_players: num_players, players_scores: players_scores} = game) do
     players_scores =
       case players_scores do
         nil -> players |> Enum.map(fn x -> {x, 0} end) |> Map.new()

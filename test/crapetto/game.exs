@@ -105,4 +105,23 @@ defmodule Crapetto.GameTest do
     assert game.players_scores["Bob"] == 1
 
   end
+
+  test "Shuffle when stuck", %{game: _game} do
+    players = ["Alice", "Bob", "Charles"]
+    game = players |> Enum.reduce(Game.new_game(100, "dompdv"), fn p, g -> Game.add_player(g, p) end) |> Game.start_game()
+    game = Enum.reduce(["Alice", "Alice", "Bob"], game, fn p, g -> Game.show_three(g, p) end)
+    initial_counts = Enum.map(game.players_decks,
+      fn {p, %{deck: deck, ligretto: ligretto, displayed: displayed, series: series}} ->
+        {p, Enum.count(deck) + Enum.count(ligretto) + Enum.count(displayed) + Enum.count(series)}
+      end) |> Map.new()
+    game = Game.switch_stuck_player(game, "Alice")
+    game = Game.switch_stuck_player(game, "Bob")
+    assert game.stuck_players == MapSet.new(["Alice", "Bob"])
+    game = Game.switch_stuck_player(game, "Charles")
+    after_counts = Enum.map(game.players_decks,
+      fn {p, %{deck: deck, ligretto: ligretto, displayed: displayed, series: series}} ->
+        {p, Enum.count(deck) + Enum.count(ligretto) + Enum.count(displayed) + Enum.count(series)}
+      end) |> Map.new()
+    assert after_counts == initial_counts
+  end
   end
