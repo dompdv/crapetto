@@ -1,10 +1,12 @@
 defmodule CrapettoWeb.PageLive do
   use CrapettoWeb, :live_view
+
   alias CrapettoWeb.Presence
+  alias CrapettoWeb.Router.Helpers, as: Routes
+
   alias Crapetto.Accounts
   alias Crapetto.Casino
   alias Crapetto.GameServer
-  alias CrapettoWeb.Router.Helpers, as: Routes
 
   @impl true
   def mount(_params, %{"user_token" => token}, socket) do
@@ -52,7 +54,6 @@ defmodule CrapettoWeb.PageLive do
     {:noreply, assign(socket, players: updated_players)}
   end
 
-
   # A new game has been created
   @impl true
   def handle_info(:new_game, socket) do
@@ -79,6 +80,5 @@ defmodule CrapettoWeb.PageLive do
     GameServer.add_player(game_pid, socket.assigns.current_user.email)
     {:noreply, push_redirect(socket, to: "/games/#{id_game}")}
   end
-
 
 end

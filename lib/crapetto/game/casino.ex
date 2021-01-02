@@ -30,7 +30,7 @@ defmodule Crapetto.Casino do
   def list(casino) do
     GenServer.call(casino, :list)
   end
-  def list() do
+  def list do
     GenServer.call(Crapetto.Casino, :list)
   end
 

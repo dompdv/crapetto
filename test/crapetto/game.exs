@@ -23,16 +23,16 @@ defmodule Crapetto.GameTest do
     game = Game.start_game(game)
     assert Game.playable?(game, {"Alice", :blue, 2}) == false
     assert Game.playable?(game, {"Alice", :blue, 1})
-    game = Game.play_on_stack(game,{"Alice", :blue, 1})
-    game = Game.play_on_stack(game,{"Alice", :blue, 1})
-    game = Game.play_on_stack(game,{"Alice", :yellow, 1})
-    game = Game.play_on_stack(game,{"Alice", :blue, 2})
+    game = Game.play_on_stack(game, {"Alice", :blue, 1})
+    game = Game.play_on_stack(game, {"Alice", :blue, 1})
+    game = Game.play_on_stack(game, {"Alice", :yellow, 1})
+    game = Game.play_on_stack(game, {"Alice", :blue, 2})
     assert Game.playable?(game, {"Alice", :blue, 2})
     assert Game.playable?(game, {"Alice", :blue, 3})
     assert Game.playable?(game, {"Alice", :blue, 4}) == false
-    game = Game.play_on_stack(game,{"Alice", :yellow, 2})
-    game = Game.play_on_stack(game,{"Alice", :blue, 2})
-    game = Game.play_on_stack(game,{"Alice", :blue, 3})
+    game = Game.play_on_stack(game, {"Alice", :yellow, 2})
+    game = Game.play_on_stack(game, {"Alice", :blue, 2})
+    game = Game.play_on_stack(game, {"Alice", :blue, 3})
     assert Game.playable?(game, {"Alice", :yellow, 3})
     #IO.inspect(game)
     %{players_decks: %{"Bob" => %{ligretto: ligretto} = player_deck}} = game

@@ -4,8 +4,9 @@ defmodule Crapetto.Accounts do
   """
 
   import Ecto.Query, warn: false
-  alias Crapetto.Repo
+
   alias Crapetto.Accounts.{User, UserToken, UserNotifier}
+  alias Crapetto.Repo
 
   ## Database getters
 

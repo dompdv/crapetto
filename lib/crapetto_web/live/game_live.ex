@@ -1,9 +1,10 @@
 defmodule CrapettoWeb.GameLive do
   use CrapettoWeb, :live_view
+
   alias Crapetto.Accounts
   alias Crapetto.Casino
-  alias Crapetto.GameServer
   alias Crapetto.Game
+  alias Crapetto.GameServer
 
 #  alias CrapettoWeb.Router.Helpers, as: Routes
 
@@ -22,7 +23,6 @@ def mount(_params, %{"user_token" => token}, socket) do
 
   {:ok, assign(socket, %{current_user: current_user, keyup: true})}
 end
-
 
 defp subscribe(id_game) do
   Phoenix.PubSub.unsubscribe(Crapetto.PubSub, "game:#{id_game}")
@@ -87,7 +87,6 @@ def handle_event("launch_game", _params, socket) do
   {:noreply, assign(socket, :game,  game)}
 end
 
-
 @impl true
 def handle_event("keydown", %{"key" => key}, socket) do
   if socket.assigns.keyup do
@@ -107,7 +106,6 @@ def handle_event("keydown", %{"key" => key}, socket) do
   end
 end
 
-
 def handle_event("keydown", _params, socket) do
   {:noreply, socket}
 end
@@ -122,16 +120,18 @@ def handle_event("stuck", _params, socket) do
   {:noreply, assign(socket, :game,  game)}
 end
 
-
 def handle_event("card_click", %{"card" => "ligretto"}, socket) do
   play(socket, :ligretto)
 end
+
 def handle_event("card_click", %{"card" => "showthree"}, socket) do
   play(socket, :show_three)
 end
+
 def handle_event("card_click", %{"card" => "displayed"}, socket) do
   play(socket, :displayed)
 end
+
 def handle_event("card_click", %{"card" => "series", "serie" => serie}, socket) do
   parsed = Integer.parse(serie)
   if parsed == :error do
@@ -146,7 +146,6 @@ defp refresh_game(socket) do
   id_game = socket.assigns.id_game
   assign(socket, game: Casino.lookup(id_game))
 end
-
 def handle_info(:unlock_countdown, socket) do
   game_pid  = socket.assigns.game_pid
   player = socket.assigns.current_user.email
@@ -160,6 +159,7 @@ end
 def handle_info({:add_player, _id_player}, socket) do
   {:noreply, refresh_game(socket)}
 end
+
 def handle_info({:remove_player, _id_player}, socket) do
   {:noreply, refresh_game(socket)}
 end
@@ -207,7 +207,4 @@ end
 def handle_info(_params, socket) do
   {:noreply, socket}
 end
-
-
-
 end
