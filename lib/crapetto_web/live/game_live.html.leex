@@ -143,7 +143,7 @@
 
 
 <%= if @game.status == :overall_over do %>
-<div>And the winner is ....<%= @game.ovrall_winner %></div>
+<div>And the winner is ....<%= @game.overall_winner %></div>
 <% end %>
 <% sorted_scores = Enum.sort(Enum.to_list(@game.players_scores), fn {_,x}, {_,y} -> x >= y end) %>
 <div><%= @game.winner %> won the last set</div>

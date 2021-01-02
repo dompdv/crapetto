@@ -56,20 +56,17 @@ defmodule CrapettoWeb.PageLive do
   # A new game has been created
   @impl true
   def handle_info(:new_game, socket) do
-    IO.inspect({"handle new_game"})
     {:ok, games} = Casino.list()
     {:noreply, assign(socket, games: games)}
   end
   @impl true
   def handle_info(:game_modification, socket) do
-    IO.inspect({"handle new_game"})
     {:ok, games} = Casino.list()
     {:noreply, assign(socket, games: games)}
   end
 
   @impl true
   def handle_info(params, socket) do
-    IO.inspect({"handle info", params})
     {:noreply, socket}
   end
 
@@ -80,7 +77,6 @@ defmodule CrapettoWeb.PageLive do
     {:ok, id_game} = Casino.create(id_user, user.email)
     game_pid  = Casino.game_pid(id_game)
     GameServer.add_player(game_pid, socket.assigns.current_user.email)
-    IO.inspect({"CLICK", user.email, id_user})
     {:noreply, push_redirect(socket, to: "/games/#{id_game}")}
   end
 

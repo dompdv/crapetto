@@ -1,7 +1,6 @@
 defmodule Crapetto.Casino do
   use GenServer
 
-  alias Crapetto.Game
   alias Crapetto.GameServer
 
 @doc """
@@ -87,6 +86,5 @@ defmodule Crapetto.Casino do
     Phoenix.PubSub.broadcast(Crapetto.PubSub, "games_arena", :new_game)
     {:reply, {:ok, new_game.id_game} , new_state}
   end
-  #TODO Ajouter le monitoring
   #TODO Ajouter la suppression de parties
 end

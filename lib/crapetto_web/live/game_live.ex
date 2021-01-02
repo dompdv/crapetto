@@ -42,7 +42,9 @@ end
 defp play(socket, what) do
   game_pid  = socket.assigns.game_pid
   player = socket.assigns.current_user.email
-  if not (GameServer.is_locked(game_pid, player)) do
+  if GameServer.is_locked(game_pid, player) do
+    {:noreply, socket}
+  else
     {result, _game} =
       case what do
         :ligretto-> GameServer.play_ligretto(game_pid, player)
@@ -60,8 +62,6 @@ defp play(socket, what) do
     else
       {:noreply, assign(socket, :keyup,  false)}
     end
-  else
-    {:noreply, socket}
   end
 end
 
@@ -134,12 +134,12 @@ def handle_event("card_click", %{"card" => "displayed"}, socket) do
 end
 def handle_event("card_click", %{"card" => "series", "serie" => serie}, socket) do
   parsed = Integer.parse(serie)
-  cond do
-    parsed == :error -> {:noreply, socket}
-    true ->
-      {serie, _} = parsed
-      play(socket, {:series, serie})
-    end
+  if parsed == :error do
+    {:noreply, socket}
+  else
+    {serie, _} = parsed
+    play(socket, {:series, serie})
+  end
 end
 
 defp refresh_game(socket) do

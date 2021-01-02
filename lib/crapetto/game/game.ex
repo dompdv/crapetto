@@ -29,11 +29,11 @@ defmodule Crapetto.Game do
   end
 
   def remove_player(%Crapetto.Game{status: :starting, players: players, locked_to_join: locked} = game, a_player) do
-    if not locked do
+    if locked do
+      game
+    else
       new_players = List.delete(players, a_player)
       %Crapetto.Game{game | players: new_players, num_players: Enum.count(new_players)}
-    else
-      game
     end
   end
 
@@ -147,7 +147,7 @@ defmodule Crapetto.Game do
       {card, ligretto} = List.pop_at(ligretto, 0)
       series = Map.put series, location, card
       new_player_deck = %{player_deck | ligretto: ligretto, series: series}
-      empty_ligretto = Enum.count(ligretto) == 0
+      empty_ligretto = Enum.empty?(ligretto)
       %{status: status, winner: winner} = game
       game =
         %{game | players_decks: Map.put(game.players_decks, player, new_player_deck),
@@ -217,13 +217,11 @@ defmodule Crapetto.Game do
     case ligretto do
       [] -> {:error, game}
       [card|r_ligretto] ->
-        if not playable?(game, card) do
-          {:error, game}
-        else
+        if playable?(game, card) do
           game = play_on_stack(game, card)
           new_player_deck = %{player_deck | ligretto: r_ligretto}
           # Si on vide le ligretto, on a un gagnant !
-          empty_ligretto = Enum.count(r_ligretto) == 0
+          empty_ligretto = Enum.empty?(r_ligretto)
           %{status: status, winner: winner} = game
           game =
             %{game | players_decks: Map.put(game.players_decks, player, new_player_deck),
@@ -235,6 +233,8 @@ defmodule Crapetto.Game do
             {:ok, game}
           end
 
+        else
+          {:error, game}
         end
     end
   end
@@ -245,14 +245,14 @@ defmodule Crapetto.Game do
     case serie do
       nil -> {:error, game}
       card ->
-        if not playable?(game, card) do
-          {:error, game}
-        else
+        if playable?(game, card) do
           game = play_on_stack(game, card)
           new_player_deck = %{player_deck | series: Map.put(series, location, nil)}
           game = %{game | players_decks: Map.put(game.players_decks, player, new_player_deck)}
           game = ligretto_to_series(game, player, location)
           {:ok, game}
+        else
+          {:error, game}
         end
     end
   end
@@ -263,13 +263,13 @@ defmodule Crapetto.Game do
     case displayed do
       [] -> {:error, game}
       [card | r_displayed] ->
-        if not playable?(game, card) do
-          {:error, game}
-        else
+        if playable?(game, card) do
           game = play_on_stack(game, card)
           new_player_deck = %{player_deck | displayed: r_displayed}
           game = %{game | players_decks: Map.put(game.players_decks, player, new_player_deck)}
           {:ok, game}
+        else
+          {:error, game}
         end
     end
   end
@@ -300,7 +300,7 @@ defmodule Crapetto.Game do
       players
       |> Enum.map(
         fn p -> {p,
-        %{deck: (for c <- [:red, :green, :blue, :yellow], n <- 1..10, do: {p,c,n}) |> Enum.shuffle(),
+        %{deck: (for c <- [:red, :green, :blue, :yellow], n <- 1..10, do: {p, c, n}) |> Enum.shuffle(),
           ligretto: [],
           series: 1..series |> Enum.map(fn x -> {x, nil} end) |> Map.new(),
           displayed: []}
@@ -344,7 +344,7 @@ defmodule Crapetto.Game do
       |> Enum.map(fn player -> {player, {count_stacks[player], ligrettos[player], count_stacks[player] - 2 * ligrettos[player] }} end)
       |> Map.new()
 
-    last_score_only = last_play_score |> Enum.map(fn {p, {_,_,s}} -> {p, s} end) |> Map.new()
+    last_score_only = last_play_score |> Enum.map(fn {p, {_, _, s}} -> {p, s} end) |> Map.new()
 
     players_scores =
       players_scores
@@ -352,7 +352,7 @@ defmodule Crapetto.Game do
       |> Map.new()
 
       # Do we have a winner
-    sorted_players = Enum.sort(Enum.to_list(players_scores), fn {_,x}, {_,y} -> x >= y end)
+    sorted_players = Enum.sort(Enum.to_list(players_scores), fn {_, x}, {_, y} -> x >= y end)
     {overall_winner, score} = hd(sorted_players)
     if score >= game.score_to_win do
       %Crapetto.Game{game |
