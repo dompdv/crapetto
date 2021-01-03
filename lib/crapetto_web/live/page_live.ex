@@ -11,6 +11,7 @@ defmodule CrapettoWeb.PageLive do
   @impl true
   def mount(_params, %{"user_token" => token}, socket) do
     current_user = Accounts.get_user_by_session_token(token)
+
     players =
       if connected?(socket) do
         # Presence. Le topic est arbitraire (ici, la table de jeu)
@@ -20,7 +21,10 @@ defmodule CrapettoWeb.PageLive do
         CrapettoWeb.Endpoint.subscribe(topic)
         # Track changes to the topic : utilise in Presence.track qui track le **process**
         # "player" est une méta qui contient seulement l'email du joueur
-        Presence.track(self(), topic, socket.id, %{player: current_user.email, player_id: current_user.id})
+        Presence.track(self(), topic, socket.id, %{
+          player: current_user.email,
+          player_id: current_user.id
+        })
 
         # Subscribe to the topic where news are broacasted about all games (creation, end, change of status,...)
         Phoenix.PubSub.unsubscribe(Crapetto.PubSub, "games_arena")
@@ -35,11 +39,13 @@ defmodule CrapettoWeb.PageLive do
       end
 
     {:ok, games} = Casino.list()
-    {:ok, assign(socket, %{
-      players: players,
-      current_user: current_user,
-      games: games
-      })}
+
+    {:ok,
+     assign(socket, %{
+       players: players,
+       current_user: current_user,
+       games: games
+     })}
   end
 
   # Evenement lancé par Presence à chaque fois qu'un joueur arrive ou s'en va
@@ -60,6 +66,7 @@ defmodule CrapettoWeb.PageLive do
     {:ok, games} = Casino.list()
     {:noreply, assign(socket, games: games)}
   end
+
   @impl true
   def handle_info(:game_modification, socket) do
     {:ok, games} = Casino.list()
@@ -76,9 +83,8 @@ defmodule CrapettoWeb.PageLive do
     user = socket.assigns.current_user
     id_user = user.id
     {:ok, id_game} = Casino.create(id_user, user.email)
-    game_pid  = Casino.game_pid(id_game)
+    game_pid = Casino.game_pid(id_game)
     GameServer.add_player(game_pid, socket.assigns.current_user.email)
     {:noreply, push_redirect(socket, to: "/games/#{id_game}")}
   end
-
 end

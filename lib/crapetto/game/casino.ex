@@ -3,7 +3,7 @@ defmodule Crapetto.Casino do
 
   alias Crapetto.GameServer
 
-@doc """
+  @doc """
   Starts the registry.
   """
   def start_link(opts) do
@@ -30,6 +30,7 @@ defmodule Crapetto.Casino do
   def list(casino) do
     GenServer.call(casino, :list)
   end
+
   def list do
     GenServer.call(Crapetto.Casino, :list)
   end
@@ -41,6 +42,7 @@ defmodule Crapetto.Casino do
   def create(server, id_owner, owner) do
     GenServer.call(server, {:create, %{owner: owner, id_owner: id_owner}})
   end
+
   def create(id_owner, owner) do
     GenServer.call(Crapetto.Casino, {:create, %{owner: owner, id_owner: id_owner}})
   end
@@ -75,6 +77,7 @@ defmodule Crapetto.Casino do
       |> Enum.to_list()
       |> Enum.map(fn {k, v} -> {k, GameServer.get_state(v)} end)
       |> Map.new()
+
     {:reply, {:ok, game_states}, games}
   end
 
@@ -84,7 +87,8 @@ defmodule Crapetto.Casino do
     new_game = GameServer.get_state(new_game_pid)
     new_state = Map.put(games, new_game.id_game, new_game_pid)
     Phoenix.PubSub.broadcast(Crapetto.PubSub, "games_arena", :new_game)
-    {:reply, {:ok, new_game.id_game} , new_state}
+    {:reply, {:ok, new_game.id_game}, new_state}
   end
-  #TODO Ajouter la suppression de parties
+
+  # TODO Ajouter la suppression de parties
 end

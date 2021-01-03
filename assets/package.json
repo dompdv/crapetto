@@ -3,6 +3,7 @@
   "description": " ",
   "license": "MIT",
   "scripts": {
+    "deploy": "webpack --mode production",
     "watch": "webpack --mode development --watch"
   },
   "dependencies": {

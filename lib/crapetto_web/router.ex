@@ -39,10 +39,10 @@ defmodule CrapettoWeb.Router do
 
   scope "/", CrapettoWeb do
     pipe_through [:browser, :require_authenticated_user]
-    live "/", PageLive, :index              # Home page
-    live "/games/:id", GameLive, :index     # Game page view
-
-
+    # Home page
+    live "/", PageLive, :index
+    # Game page view
+    live "/games/:id", GameLive, :index
 
     get "/users/settings", UserSettingsController, :edit
     put "/users/settings", UserSettingsController, :update

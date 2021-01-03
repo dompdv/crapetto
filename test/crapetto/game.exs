@@ -14,9 +14,16 @@ defmodule Crapetto.GameTest do
   test "basic Game tests", %{game: game} do
     assert game.owner == "dompdv"
     game = Game.start_game(game)
-    before_count = Enum.count(game.players_decks["Alice"].displayed) + Enum.count(game.players_decks["Alice"].deck)
+
+    before_count =
+      Enum.count(game.players_decks["Alice"].displayed) +
+        Enum.count(game.players_decks["Alice"].deck)
+
     Enum.reduce(1..59, game, fn _, g -> Game.show_three(g, "Alice") end)
-    assert before_count == Enum.count(game.players_decks["Alice"].displayed) + Enum.count(game.players_decks["Alice"].deck)
+
+    assert before_count ==
+             Enum.count(game.players_decks["Alice"].displayed) +
+               Enum.count(game.players_decks["Alice"].deck)
   end
 
   test "Play card", %{game: game} do
@@ -34,14 +41,14 @@ defmodule Crapetto.GameTest do
     game = Game.play_on_stack(game, {"Alice", :blue, 2})
     game = Game.play_on_stack(game, {"Alice", :blue, 3})
     assert Game.playable?(game, {"Alice", :yellow, 3})
-    #IO.inspect(game)
+    # IO.inspect(game)
     %{players_decks: %{"Bob" => %{ligretto: ligretto} = player_deck}} = game
-    new_player_deck = %{player_deck |ligretto: [{"Bob", :yellow, 3} | ligretto]}
+    new_player_deck = %{player_deck | ligretto: [{"Bob", :yellow, 3} | ligretto]}
     game = %{game | players_decks: Map.put(game.players_decks, "Bob", new_player_deck)}
     {res, _} = Game.play_ligretto(game, "Bob")
     assert res == :ok
-    #IO.inspect(game)
-    #IO.inspect(res)
+    # IO.inspect(game)
+    # IO.inspect(res)
   end
 
   test "Play series", %{game: game} do
@@ -57,25 +64,26 @@ defmodule Crapetto.GameTest do
   test "Play displayed", %{game: game} do
     game = Game.start_game(game)
     %{players_decks: %{"Bob" => %{displayed: displayed} = player_deck}} = game
-    displayed = [{"Bob", :blue, 1} |displayed]
+    displayed = [{"Bob", :blue, 1} | displayed]
     new_player_deck = %{player_deck | displayed: displayed}
     game = %{game | players_decks: Map.put(game.players_decks, "Bob", new_player_deck)}
-    #IO.inspect(game.players_decks["Bob"])
+    # IO.inspect(game.players_decks["Bob"])
     {res, _game} = Game.play_displayed(game, "Bob")
-    #IO.inspect(game.players_decks["Bob"])
-    #IO.inspect(game.stacks)
-    #IO.inspect(res)
+    # IO.inspect(game.players_decks["Bob"])
+    # IO.inspect(game.stacks)
+    # IO.inspect(res)
     assert res == :ok
   end
+
   test "Compute scores", %{game: game} do
     game = Game.start_game(game)
     %{players_decks: %{"Bob" => %{displayed: displayed} = player_deck}} = game
-    displayed = [{"Bob", :blue, 1} |displayed]
+    displayed = [{"Bob", :blue, 1} | displayed]
     new_player_deck = %{player_deck | displayed: displayed}
     game = %{game | players_decks: Map.put(game.players_decks, "Bob", new_player_deck)}
-    #IO.inspect(game.players_decks["Bob"])
+    # IO.inspect(game.players_decks["Bob"])
     {res, game} = Game.play_displayed(game, "Bob")
-    #IO.inspect(game.stacks)
+    # IO.inspect(game.stacks)
     game = %{game | status: :over}
     game = Game.update_score(game)
     assert res == :ok
@@ -96,32 +104,50 @@ defmodule Crapetto.GameTest do
     ligretto = [{"Bob", :blue, 1}]
     new_player_deck = %{player_deck | ligretto: ligretto}
     game = %{game | players_decks: Map.put(game.players_decks, "Bob", new_player_deck)}
-    #IO.inspect(game.players_decks["Bob"])
+    # IO.inspect(game.players_decks["Bob"])
     {_res, game} = Game.play_ligretto(game, "Bob")
-    #IO.inspect(game.stacks)
-    #IO.inspect(game)
+    # IO.inspect(game.stacks)
+    # IO.inspect(game)
     assert game.overall_winner == "Bob"
     assert game.status == :overall_over
     assert game.players_scores["Bob"] == 1
-
   end
 
   test "Shuffle when stuck", %{game: _game} do
     players = ["Alice", "Bob", "Charles"]
-    game = players |> Enum.reduce(Game.new_game(100, "dompdv"), fn p, g -> Game.add_player(g, p) end) |> Game.start_game()
+
+    game =
+      players
+      |> Enum.reduce(Game.new_game(100, "dompdv"), fn p, g -> Game.add_player(g, p) end)
+      |> Game.start_game()
+
     game = Enum.reduce(["Alice", "Alice", "Bob"], game, fn p, g -> Game.show_three(g, p) end)
-    initial_counts = Enum.map(game.players_decks,
-      fn {p, %{deck: deck, ligretto: ligretto, displayed: displayed, series: series}} ->
-        {p, Enum.count(deck) + Enum.count(ligretto) + Enum.count(displayed) + Enum.count(series)}
-      end) |> Map.new()
+
+    initial_counts =
+      Enum.map(
+        game.players_decks,
+        fn {p, %{deck: deck, ligretto: ligretto, displayed: displayed, series: series}} ->
+          {p,
+           Enum.count(deck) + Enum.count(ligretto) + Enum.count(displayed) + Enum.count(series)}
+        end
+      )
+      |> Map.new()
+
     game = Game.switch_stuck_player(game, "Alice")
     game = Game.switch_stuck_player(game, "Bob")
     assert game.stuck_players == MapSet.new(["Alice", "Bob"])
     game = Game.switch_stuck_player(game, "Charles")
-    after_counts = Enum.map(game.players_decks,
-      fn {p, %{deck: deck, ligretto: ligretto, displayed: displayed, series: series}} ->
-        {p, Enum.count(deck) + Enum.count(ligretto) + Enum.count(displayed) + Enum.count(series)}
-      end) |> Map.new()
+
+    after_counts =
+      Enum.map(
+        game.players_decks,
+        fn {p, %{deck: deck, ligretto: ligretto, displayed: displayed, series: series}} ->
+          {p,
+           Enum.count(deck) + Enum.count(ligretto) + Enum.count(displayed) + Enum.count(series)}
+        end
+      )
+      |> Map.new()
+
     assert after_counts == initial_counts
   end
-  end
+end

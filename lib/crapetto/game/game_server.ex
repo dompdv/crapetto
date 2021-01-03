@@ -25,6 +25,7 @@ defmodule Crapetto.GameServer do
   def start_game(game) do
     GenServer.call(game, :start)
   end
+
   def terminate_game(game) do
     GenServer.call(game, :terminate)
   end
@@ -33,7 +34,6 @@ defmodule Crapetto.GameServer do
     GenServer.call(game, {:switch_stuck_player, player})
   end
 
-
   def play_ligretto(game, player) do
     GenServer.call(game, {:play_ligretto, player})
   end
@@ -41,6 +41,7 @@ defmodule Crapetto.GameServer do
   def play_displayed(game, player) do
     GenServer.call(game, {:play_displayed, player})
   end
+
   def play_series(game, player, serie) do
     GenServer.call(game, {:play_series, player, serie})
   end
@@ -71,7 +72,6 @@ defmodule Crapetto.GameServer do
     Phoenix.PubSub.broadcast(Crapetto.PubSub, "game:#{game.id_game}", what)
     Phoenix.PubSub.broadcast(Crapetto.PubSub, "games_arena", :game_modification)
   end
-
 
   @impl true
   def handle_call(:state, _from, game) do
@@ -157,7 +157,6 @@ defmodule Crapetto.GameServer do
     end
   end
 
-
   @impl true
   def handle_call({:is_locked, player}, _from, game) do
     if game.status == :playing do
@@ -188,5 +187,4 @@ defmodule Crapetto.GameServer do
       {:reply, game, game}
     end
   end
-
 end
