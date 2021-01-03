@@ -61,7 +61,6 @@ defmodule Crapetto.GameServer do
     GenServer.call(game, {:lock_player, player, countdown})
   end
 
-
   @impl true
   def init(%{owner: owner, id_owner: id_owner}) do
     new_game = Game.new_game(id_owner, owner)
