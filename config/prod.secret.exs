@@ -4,12 +4,12 @@
 # remember to add this file to your .gitignore.
 use Mix.Config
 
-database_url = "postgresql://969a8638-ae04-4db3-ad05-acf762ac53fc-user:pw-8d8a6af7-d07c-4f72-af80-696ff62c83d5@postgres-free-tier-v2020.gigalixir.com:5432/969a8638-ae04-4db3-ad05-acf762ac53fc"
-#  System.get_env("DATABASE_URL") ||
-#    raise """
-#    environment variable DATABASE_URL is missing.
-##    For example: ecto://USER:PASS@HOST/DATABASE
-#    """
+database_url = # "postgresql://969a8638-ae04-4db3-ad05-acf762ac53fc-user:pw-8d8a6af7-d07c-4f72-af80-696ff62c83d5@postgres-free-tier-v2020.gigalixir.com:5432/969a8638-ae04-4db3-ad05-acf762ac53fc"
+  System.get_env("DATABASE_URL") ||
+    raise """
+    environment variable DATABASE_URL is missing.
+    For example: ecto://USER:PASS@HOST/DATABASE
+    """
 
 config :crapetto, Crapetto.Repo,
   # ssl: true,
