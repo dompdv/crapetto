@@ -3,7 +3,7 @@ defmodule Crapetto.Game do
   defstruct [
     :id_game, :owner, :id_owner, status: :starting, winner: nil, locked_to_join: false, overall_winner: nil,
     num_players: 0, players: [], players_decks: %{}, players_lock: %{}, players_scores: nil, last_play_score: %{},
-    stacks: %{}, series: 0, score_to_win: 100,
+    stacks: %{}, series: 0, score_to_win: 100, last_stack_played: nil,
     stuck_players: MapSet.new()]
 
   # Colors = :red :blue :green :yellow
@@ -199,7 +199,7 @@ defmodule Crapetto.Game do
         game.stacks
         |> Enum.filter(fn {_, stack} -> Enum.empty?(stack) end)
         |> Enum.random()
-      %{game | stacks: Map.put(game.stacks, stack, [card])}
+      %{game | stacks: Map.put(game.stacks, stack, [card]), last_stack_played: stack}
     else
       # Trouve une stack où poser la carte
       {stack, stack_content} =
@@ -207,7 +207,7 @@ defmodule Crapetto.Game do
         |> Enum.filter(fn {_, stack} -> not Enum.empty?(stack) end)
         |> Enum.filter(fn {_, [{_, c, n} | _]} -> c == color and number == n + 1 end)
         |> hd()
-      %{game | stacks: Map.put(game.stacks, stack, [card | stack_content])}
+      %{game | stacks: Map.put(game.stacks, stack, [card | stack_content]), last_stack_played: stack}
     end
   end
 
@@ -369,6 +369,9 @@ defmodule Crapetto.Game do
     end
   end
 
+  def update_score(game) do
+    game
+  end
   def restart_game(game) do
     start_game(%{game | status: :starting})
   end

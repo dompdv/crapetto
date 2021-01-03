@@ -55,13 +55,14 @@
 <!-- Stacks -->
 <div class="flex-grow p-2">
 <div class="grid grid-cols-<%= if @game.num_players < 4, do: 4, else: 6 %> gap-4">
-<%= for {_, stack} <- @game.stacks do %>
+<% last_p = @game.last_stack_played %>
+<%= for {stack_number, stack} <- @game.stacks do %>
 
     <%= if Enum.empty?(stack) do %>
     <div class="<%= sizes %> bg-gray-300 rounded-md flex justify-center items-center text-white text-2xl font-extrabold"></div>
     <% else %>
     <% [{_, c, n}| _] = stack %>
-    <div class="<%= sizes %> bg-<%=c%>-600 rounded-md flex justify-center items-center text-white text-2xl font-extrabold"><%=n%></div>
+    <div class="<%= sizes %> bg-<%=c%>-600 <%= if last_p == stack_number, do: "animate-bounce" %> rounded-md flex justify-center items-center text-white text-2xl font-extrabold"><%=n%></div>
     <% end %>
 
 <% end %>
@@ -98,7 +99,7 @@
 <!-- Ligretto -->
 <div class="flex-initial m-1">
  <% {_, c, n} = Game.get_ligretto_top(@game, @current_user.email) %>
-<div phx-click="card_click" phx-value-card="ligretto" class="flex text-center text-white rounded-md justify-center items-center text-2xl  <%= sizes %> font-extrabold bg-<%= if c == nil, do: "green", else: c %>-600"><%= if c != nil, do: n %></div>
+<div phx-click="card_click" phx-value-card="ligretto" class="flex text-center text-white cursor-pointer rounded-md justify-center items-center text-2xl  <%= sizes %> font-extrabold bg-<%= if c == nil, do: "green", else: c %>-600"><%= if c != nil, do: n %></div>
 <div class="text-center text-black justify-center items-center text-xl <%= wsize %> h-8"><%= Enum.count(player_deck.ligretto) %></div>
 <div class="text-center text-white justify-center items-center text-xl <%= wsize %> h-8 bg-gray-800">A</div>
 </div>
@@ -106,20 +107,20 @@
 <!-- Displayed -->
 <div class="flex-initial m-1">
  <% {_, c, n} = Game.get_displayed_top(@game, @current_user.email) %>
-<div phx-click="card_click" phx-value-card="displayed" class="flex text-center text-white rounded-md justify-center items-center text-2xl  <%= sizes %> font-extrabold bg-<%= if c == nil, do: "gray", else: c %>-600"><%= if c != nil, do: n %></div>
+<div phx-click="card_click" phx-value-card="displayed" class="flex text-center text-white cursor-pointer rounded-md justify-center items-center text-2xl  <%= sizes %> font-extrabold bg-<%= if c == nil, do: "gray", else: c %>-600"><%= if c != nil, do: n %></div>
 <div class="text-center text-black justify-center items-center text-xl <%= wsize %> h-8"><%= Enum.count(player_deck.displayed) %></div>
 <div class="text-center text-white justify-center items-center text-xl <%= wsize %> h-8 bg-gray-800">Z | P</div>
 </div>
 
 <!-- Click for switch -->
 <div class="flex-initial m-1">
-<div phx-click="card_click" phx-value-card="showthree" class="flex text-center text-white rounded-md justify-center items-center text-2xl  <%= sizes %> font-extrabold bg-indigo-600">Flip</div>
+<div phx-click="card_click" phx-value-card="showthree" class="flex text-center text-white cursor-pointer rounded-md justify-center items-center text-2xl  <%= sizes %> font-extrabold bg-indigo-600">Flip</div>
 </div>
 
 <!-- Series -->
 <%= for {s, {_, c, n}} <-  Game.get_series(@game, @current_user.email) do %>
 <div class="flex-initial m-1">
-<div phx-click="card_click" phx-value-card="series" phx-value-serie="<%= s %>"  class="flex text-center text-white rounded-md justify-center items-center text-2xl  <%= sizes %> font-extrabold bg-<%= if c == nil, do: "green", else: c %>-600"><%= if c != nil, do: n %></div>
+<div phx-click="card_click" phx-value-card="series" phx-value-serie="<%= s %>"  class="flex text-center text-white cursor-pointer rounded-md justify-center items-center text-2xl  <%= sizes %> font-extrabold bg-<%= if c == nil, do: "green", else: c %>-600"><%= if c != nil, do: n %></div>
 <div class="text-center text-black justify-center items-center text-xl <%= wsize %> h-8"></div>
 <div class="text-center text-white justify-center items-center text-xl <%= wsize %> h-8 bg-gray-800"><%= %{1 => "E", 2 => "R", 3 => "T", 4 => "Y", 5 => "U", 6 => "I"}[s] %></div>
 </div>
