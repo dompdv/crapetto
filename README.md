@@ -34,3 +34,9 @@ mix test crapetto/casino_tests.exs
 
 # la notion de Game
 avec un defstruct et des fonctions commodes de manipulation
+
+# Release
+```
+docker-compose build
+docker-compose up
+```

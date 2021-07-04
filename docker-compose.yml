@@ -1,0 +1,42 @@
+version: "3.1"
+services:
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: crapetto:latest
+    ports:
+      - "4000:4000"
+    user: "${UID}:${GID}"
+    tty: true
+    stdin_open: true
+    environment:
+      SECRET_KEY_BASE: Zo7uxKL+sAfpMgAkzMOtH1q2RtoxP9fYhKUGjs2tfj53yptiTWMKQEISDHHJ60+b
+      LIVEVIEW_SALT: AkzMOtH1q2Rtox
+      PORT: 4000
+      PROXY_HOST: localhost
+      PROXY_PORT: 4000
+      PROXY_SCHEME: http
+      PROXY_PATH: /
+      DATABASE_URL: ecto://postgres:postgres@db/crapetto
+    depends_on:
+      - migration
+
+  migration:
+    image: crapetto:latest
+    command: eval "Crapetto.Release.migrate"
+    environment:
+      SECRET_KEY_BASE: Zo7uxKL+sAfpMgAkzMOtH1q2RtoxP9fYhKUGjs2tfj53yptiTWMKQEISDHHJ60+b
+      LIVEVIEW_SALT: AkzMOtH1q2Rtox
+      DATABASE_URL: ecto://postgres:postgres@db/crapetto
+    
+  db:
+    image: postgres:9.6.1
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: crapetto
+    
